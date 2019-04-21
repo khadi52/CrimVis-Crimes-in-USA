@@ -1,0 +1,130 @@
+/*!
+ * Start Bootstrap - Simple Sidebar (https://startbootstrap.com/template-overviews/simple-sidebar)
+ * Copyright 2013-2019 Start Bootstrap
+ * Licensed under MIT (https://github.com/BlackrockDigital/startbootstrap-simple-sidebar/blob/master/LICENSE)
+ */
+body {
+  overflow-x: hidden;
+}
+
+.axis line {
+    stroke: #ddd;
+}
+
+
+.axis path,
+.axes line {
+    fill: none;
+    stroke: grey;
+    stroke-width: 1;
+    shape-rendering: crispEdges;
+}
+
+.axis,
+.frame {
+    shape-rendering: crispEdges;
+}
+
+.axis path {
+    display: none;
+}
+path {
+    stroke: steelblue;
+    stroke-width: 2;
+    fill: none;
+}
+
+.container-fluid .flex-container{
+  width: 100%;
+  min-height: 350px;
+  display: -webkit-flex; /* Safari */
+  display: flex; /* Standard syntax */
+}
+
+.container-fluid .flex-container1{
+    min-height: 700px;
+    flex-direction: column;
+    display: -webkit-flex; /* Safari */
+    display: flex; /* Standard syntax */
+}
+.container-fluid .flex-container .first-box{
+  padding: 10px;
+  margin: 5px auto;
+  margin-right: 5px;
+  border-style: solid;
+  border-width: thin;
+  background: #f7f7f7;
+  -webkit-flex: 1; /* Safari */
+  -ms-flex: 1; /* IE 10 */
+  flex: 1; /* Standard syntax */
+}
+
+.container-fluid .flex-container1 .first-box{
+    width: 100%;
+    padding: 10px;
+    min-height: 350px;
+    margin: 5px auto;
+    border-style: solid;
+    border-width: thin;
+    background: #f7f7f7;
+    -webkit-flex: 1; /* Safari */
+    -ms-flex: 1; /* IE 10 */
+    flex: 1; /* Standard syntax */
+}
+
+.container-fluid .flex-container .second-box{
+  margin: 5px auto;
+  border-width: thin;
+  margin-left: 5px;
+  border-style: solid;
+  background: #f7f7f7;
+}
+
+.container-fluid .flex-container1 .second-box{
+    width: 100%;
+    margin: 5px auto;
+    border-width: thin;
+    border-style: solid;
+    background: #f7f7f7;
+}
+
+#sidebar-wrapper {
+  min-height: 100vh;
+  margin-left: -15rem;
+  -webkit-transition: margin .25s ease-out;
+  -moz-transition: margin .25s ease-out;
+  -o-transition: margin .25s ease-out;
+  transition: margin .25s ease-out;
+}
+
+#sidebar-wrapper .sidebar-heading {
+  padding: 0.875rem 1.25rem;
+  font-size: 1.2rem;
+}
+
+#sidebar-wrapper .list-group {
+  width: 15rem;
+}
+
+#page-content-wrapper {
+  min-width: 100vw;
+}
+
+#wrapper.toggled #sidebar-wrapper {
+  margin-left: 0;
+}
+
+@media (min-width: 768px) {
+  #sidebar-wrapper {
+    margin-left: 0;
+  }
+
+  #page-content-wrapper {
+    min-width: 0;
+    width: 100%;
+  }
+
+  #wrapper.toggled #sidebar-wrapper {
+    margin-left: -15rem;
+  }
+}
