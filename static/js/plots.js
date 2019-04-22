@@ -1,14 +1,11 @@
 const pca_view_opt = d3.select(".pca_option");
-console.log(pca_view_opt);
 const dash_view_opt = d3.select(".dash_option");
 const PCA = "PCA_ANALYSIS";
 const DASHBOARD = "DASHBOARD"
-var path = d3.geoPath();
 var color = {}, stateNames = {}, violentCrime = {}, totalCrime = {};
 const margin = {top: 30, right: 20, bottom: 30, left: 50};
 
 function route(view) {
-    console.log(view)
     if(view == PCA){
         $.post("pca", {'data': 'received'}, plot_scree_plot);
     }
@@ -114,38 +111,43 @@ function draw_all_crimes(data) {
         .attr("class","first-box second-box");
 
 
-    var first_box_boundary = d3.select(".first-box").node().getBoundingClientRect();
-    console.log(first_box_boundary.height)
+    var first_box_boundary = d3.select("#usmap-box").node().getBoundingClientRect();
 
-    var width = first_box_boundary.width - (2*margin.left) - (2*margin.right),
-        height = first_box_boundary.height - (2*margin.top) - (2*margin.bottom);
-
-
+    var width = first_box_boundary.width - (margin.left) - (margin.right),
+        height = first_box_boundary.height - (margin.top) - (margin.bottom);
 
     d3.json("https://d3js.org/us-10m.v1.json", function(error, unitedStates) {
         if (error) throw error;
-        var us_map = topojson.feature(unitedStates, unitedStates.objects.states).features;
+        var us_map = topojson.feature(unitedStates, unitedStates.objects.states);
+
         var svg = d3.select("#usmap-box").append('div', "usmap")
             .append("svg")
             .attr("width", width + margin.left + margin.right)
             .attr("height", height +margin.top + margin.bottom);
+
+        var projection = d3.geoIdentity()
+            .fitExtent([[margin.left,margin.right],[width,height]], us_map);
+
+        var path = d3.geoPath().projection(projection);
+
         data.forEach(function (d, i) {
             stateNames[d.id] = d.State;
             d["Total Crimes"] = +d["Total Crimes"];
             d["Violent Crime"] = +d["Violent Crime"];
             violentCrime[d.id] = d['Violent Crime'];
             totalCrime[d.id] = d['Total Crimes'];
-            //color2017[d.id] = {color:d3.interpolate("#ffffcc", "#800026")(d["Total Crimes"]/10000)}
         });
-        console.log(data);
+
         var pathSvg = svg.append("g")
             .attr("class", "states")
             .selectAll("path")
-            .data(us_map)
+            .data(us_map.features)
             .enter()
             .append("path")
+            .style("fill", "#40469c")
             .attr("d", path)
             .on("mouseover", function(d,i) {
+                d3.select(this).style("fill","red");
                 d3.select("#tooltip").html(tooltipHtml(d))
                     .style('color', 'black').style('font-size', '10.5px').style('text-align', 'center')
                     .style('display', 'block').style("left", d3.event.pageX + "px")
@@ -155,8 +157,8 @@ function draw_all_crimes(data) {
                 d3.select("#tooltip").style('left',(d3.event.layerX - 20)+'px').style('top',(d3.event.layerY + 15)+'px');
             })
             .on("mouseout", function() {
-                d3.select(this).transition()
-                    .duration(400);
+                d3.select(this).style("fill","#40469c");
+                d3.select(this).transition().duration(400);
                 d3.select("#tooltip").style('opacity',0).style('display', 'none');
             })
             .style("fill", function(d){ return {color:d3.interpolateRgb("#ffffcc", "#800026")(d["Total Crimes"]/10000)}});

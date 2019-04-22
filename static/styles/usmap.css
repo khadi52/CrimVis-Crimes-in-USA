@@ -3,9 +3,6 @@
     stroke: #2573ff;
     stroke-width: 1;
 }
-.states :hover {
-    fill: #ff4238;
-}
 .states{
     fill: #40469c;
 }
