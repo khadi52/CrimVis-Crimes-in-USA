@@ -71,7 +71,66 @@ function route(view) {
 
 function plot_dashboard(data){
 	draw_all_crimes(data);
+	create_pie(data);
 }
+
+function create_pie(data) {
+    var first_box_boundary = d3.select("#pie1").node().getBoundingClientRect();
+    data = JSON.parse(data.area_pie_data);
+    data.forEach(function(d) {
+        d.area = d['Area'];
+        d.total_crime = d['Total Crimes'];
+    });
+
+    var width = first_box_boundary.width - (margin.left) - (margin.right),
+        height = first_box_boundary.height - (margin.top) - (margin.bottom);
+
+    const radius = Math.min(width,height)/2;
+
+    var svg = d3.select("#pie1")
+        .append("svg")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height +margin.top + margin.bottom);
+
+    var groupedChart = svg.append("g")
+        .attr("transform", "translate(" + ((margin.left) + (margin.right) + width)/2+ "," + ((margin.left) + (margin.right) + height)/2 + ")");
+
+    var pie = d3.pie()
+        .value(function (d) {
+            return d.total_crime;
+        });
+
+    var arc = d3.arc()
+        .outerRadius(radius-1)
+        .innerRadius(0);
+
+    var label = d3.arc()
+        .outerRadius(radius-10)
+        .innerRadius(radius-40);
+
+    var pieColors = d3.scaleOrdinal(['#fba55f', '#d13c4b', '#4288b5', '#4da3b1', '#65b5aa', '#83cca5', '#a2d9a3', '#bfe5a0', '#d8ef9f', '#ebf7a6', '#f7faaf', '#fdf5ac', '#fee89a', '#fed585', '#fdbf70', '#f78851', '#ef6d4a', '#d13c4b', '#000075', '#808080', '#ef6d4a', '#000000']);
+    groupedChart.selectAll("path")
+        .data(pie(data))
+        .enter()
+        .append("path")
+        .style("stroke","white")
+        .style("fill",function(d,i){return  pieColors(i);})
+        .attr("d",arc)
+        .append("title")
+        .text(function (d) {
+            var x = Math.floor(((+d.data.total_crime)));
+            var y = "";
+            if (d.data.area === "NMC")
+                y =  "Non Metropolitan County";
+            else if (d.data.area === "MSA")
+                y = "Metropolitan Statistical Area";
+            else
+                y = "Cities Outside Metropolitan Area";
+            return y+" - "+x;
+        });
+
+}
+
 
 function tooltipHtml(d){   /* function to create html content string in tooltip div. */
     //d is the id of the state.. get the row which has this id
@@ -86,6 +145,7 @@ function tooltipHtml(d){   /* function to create html content string in tooltip 
 function draw_all_crimes(data) {
     d3.select(".chart-container").remove();
     data = JSON.parse(data.chart_data);
+    console.log(data);
     d3.select(".container-fluid")
         .append("div")
         .attr("class","chart-container")
@@ -104,7 +164,8 @@ function draw_all_crimes(data) {
         .attr("class","flex-container")
         .attr("id", "second-container")
         .append("div")
-        .attr("class","first-box");
+        .attr("class","first-box")
+        .attr("id", "pie1");
 
     d3.select("#second-container")
         .append("div")

@@ -21,9 +21,13 @@ def index():
     #return the original cleaned dataframe to plot the dashboard
     if request.method == 'POST':
         if request.form['data'] == 'received':
-             chart_data = state_df.to_dict(orient='records')
+             chart_data = us_map_df.to_dict(orient='records')
+             area_pie_data = area_pie_df.to_dict(orient='records')
              chart_data = json.dumps(chart_data, indent=2)
-             data = {'chart_data': chart_data}
+             area_pie_data = json.dumps(area_pie_data, indent=2)
+             print(chart_data)
+             print(area_pie_data)
+             data = {'chart_data': chart_data,'area_pie_data':area_pie_data}
              return jsonify(data)
     return render_template("index.html")
 
@@ -173,13 +177,16 @@ def print_table_loadings(loading,sum_sqaured_loading):
     return [int(i[0]) for i in result_list]
 
 if __name__ == "__main__":
-    global state_df, scaled_df, df_pca
+    global us_map_df, scaled_df, df_pca, area_pie_df
     orig_data = pd.read_csv('data/crime-dataset.csv')
     df_pca = orig_data.copy(deep=True)
 
-    state_df = orig_data.groupby(['Year', 'id', 'State', 'State Population'])["Total Crimes", "Violent Crime"].apply(
+    us_map_df = orig_data.groupby(['id', 'State'])["Total Crimes", "Violent Crime"].apply(
         lambda x: x.astype(int).sum()).reset_index()
-    state_df = state_df.loc[state_df.Year == 2017]
+    area_pie_df = orig_data.groupby(['Area'])["Total Crimes"].apply(
+        lambda x: x.astype(int).sum()).reset_index()
+    print(area_pie_df)
+    print(us_map_df)
 
     clean_dataset()
     #dataframe to store normalized data
