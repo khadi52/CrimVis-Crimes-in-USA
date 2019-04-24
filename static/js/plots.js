@@ -163,13 +163,7 @@ function create_pie(data) {
             return d.total_crime;
         });
 
-    var arc = d3.arc()
-        .outerRadius(radius - 1)
-        .innerRadius(0);
-
-    var label = d3.arc()
-        .outerRadius(radius - 10)
-        .innerRadius(radius - 40);
+    var arc = d3.arc().outerRadius(radius - 1).innerRadius(0);
 
     groupedChart.selectAll("path")
         .data(pie(data))
@@ -181,6 +175,8 @@ function create_pie(data) {
         })
         .attr("d", arc)
         .on("mouseover", function (d, i) {
+            arc = d3.arc().innerRadius(0).outerRadius(radius+10)
+            d3.select(this).transition().duration(400).attr("d", arc);
             d3.select("#tooltip").html(pieTooltipHtml(d))
                 .style('color', 'black').style('font-size', '10.5px').style('text-align', 'center')
                 .style('display', 'block').style("left", d3.event.pageX + "px")
@@ -190,7 +186,8 @@ function create_pie(data) {
             d3.select("#tooltip").style('left', (d3.event.layerX - 20) + 'px').style('top', (d3.event.layerY + 15) + 'px');
         })
         .on("mouseout", function () {
-            d3.select(this).transition().duration(400);
+              arc = d3.arc().innerRadius(0).outerRadius(radius)
+            d3.select(this).transition().duration(400).attr("d", arc);
             d3.select("#tooltip").style('opacity', 0).style('display', 'none');
         });
     var legendG = svg.selectAll(".legend")

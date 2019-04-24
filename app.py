@@ -72,7 +72,6 @@ def pca():
 
     indices = list(range(1, 13))
     zip_list = list(zip(indices, variance,sum_sqaured_loading,features_list))
-
     data = pd.DataFrame(zip_list, columns = ['pca_component' , 'eigen_values','sum_sqaured_loadings','features_name'])
 
     if request.method == 'POST':
@@ -82,16 +81,6 @@ def pca():
              data = {'chart_data': chart_data}
              return jsonify(data)
     return ""
-
-@app.route("/draw_bar_chart", methods = ['POST', 'GET'])
-def scatter_plot_matrix_random():
-    df = orig_data.groupby(['Year', 'id', 'State', 'State Population'])["Rape"].apply(
-        lambda x: x.astype(int).sum()).reset_index()
-    df = df.loc[df.id == 1]
-    chart_data = df.to_dict(orient='records')
-    chart_data = json.dumps(chart_data, indent=2)
-    data = {'chart_data': chart_data}
-    return jsonify(data)
 
 #Task 3 Part 3 - Scatter Matrix Plot for random, stratified and original dataset
 @app.route("/scatter_matrix", methods = ['POST', 'GET'])
