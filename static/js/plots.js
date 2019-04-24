@@ -366,14 +366,24 @@ function plot_scree_plot(data) {
         .append("div")
         .attr("class", "flex-container1")
         .append("div")
-        .attr("class", "first-box");
+        .attr("class", "first-box")
+        .attr("id", "scree_plot");
+
+    var chart_header = d3.select("#scree_plot")
+        .append("div")
+        .attr("class", "chart-header")
+        .attr("id", "pie1-header")
+        .style("color", "#fff")
+        .style("background-color", "#6d7fcc")
+        .text("Scree Plot for Dataset")
+        .style("padding", "5px");
 
     d3.select(".flex-container1")
         .append("div")
         .attr("class", "first-box second-box")
         .attr("id", "sum_squared_loadings")
 
-    var first_box_boundary = d3.select(".first-box").node().getBoundingClientRect();
+    var first_box_boundary = d3.select("#scree_plot").node().getBoundingClientRect();
     console.log(first_box_boundary.height);
 
     var width = first_box_boundary.width - (2 * margin.left) - (2 * margin.right),
@@ -413,17 +423,17 @@ function plot_scree_plot(data) {
         .attr("height", height + 1.5 * margin.top + 1.5 * margin.bottom)
         .append("g")
         .attr("transform",
-            "translate(" + margin.left + "," + margin.top + ")");
+            "translate(" + (2*margin.left) + "," + (1.5*margin.top) + ")");
 
     svg_scree.append("g")
         .attr("class", "xaxes")
         .attr("transform", "translate(0," + height + ")")
         .call(xAxis)
         .append("text")
-        .attr("class", "xaxisl")
         .attr("text-anchor", "middle")
         .attr("y", margin.left)
         .attr("x", (width / 2))
+        .attr("dy", "1em")
         .text("PCA Components");
     ;
     // Add the Y Axis
@@ -453,13 +463,6 @@ function plot_scree_plot(data) {
         .attr("height", function (d) {
             return height - y(d.eigen_values);
         });
-    svg_scree.append("text")
-        .attr("x", (width / 2))
-        .attr("y", 0 - (margin.top / 2))
-        .style("font-size", "12px")
-        .attr("text-anchor", "middle")
-        .style("text-decoration", "underline")
-        .text("Scree Plot for Dataset");
 
     // Add the valueline path.
     svg_scree.append("path")
