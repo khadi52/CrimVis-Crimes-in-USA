@@ -134,6 +134,11 @@ def clean_dataset():
     df_pca.drop('State', axis = 1, inplace=True)
     df_pca.drop('Area', axis = 1, inplace=True)
     df_pca.drop('code', axis = 1, inplace=True)
+    df_pca.drop('Year', axis = 1, inplace=True)
+    df_pca.drop('State Population', axis = 1, inplace=True)
+    df_pca.drop('Area Population', axis = 1, inplace=True)
+    df_pca.drop('Total Crimes', axis = 1, inplace=True)
+    df_pca.drop('Violent Crime', axis = 1, inplace=True)
 
 #method to normalise the data using MaxMinScaler
 def get_scaled_data():
@@ -141,7 +146,7 @@ def get_scaled_data():
     global df_pca
     # Scaling the data to perform PCA USing MinMaxScaler to scale all features in range of 0-1
     columns = df_pca.columns
-    scaler = StandardScaler()
+    scaler = MinMaxScaler()
     scaled_df = scaler.fit_transform(df_pca)
     scaled_df = pd.DataFrame(scaled_df, columns=columns)
 
@@ -183,9 +188,6 @@ if __name__ == "__main__":
     crime_barchart_df = orig_data.groupby(['Year'])["Total Crimes"].apply(
         lambda x: x.astype(int).sum()).reset_index()
     crime_barchart_df.Year = crime_barchart_df.Year.astype(str)
-    print(crime_barchart_df)
-    print(area_pie_df.dtypes)
-    print(crime_barchart_df.dtypes)
     clean_dataset()
     #dataframe to store normalized data
     scaled_df = pd.DataFrame()
@@ -199,7 +201,7 @@ if __name__ == "__main__":
     #printing table of top attributes with highest loadings
     top_features = print_table_loadings(loading,sum_sqaured_loading)
 
-    features_list = list(scaled_df.columns.values)
+    features_list = list(df_pca.columns.values)
     #print("Top 3 features with highest PCA loadings - ", features_list[top_features[0]-1], ', ',features_list[top_features[1]-1], ', ',features_list[top_features[2]-1])
 
     app.run(debug=True)

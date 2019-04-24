@@ -14,7 +14,7 @@ var tip = d3.tip()
 
 function route(view) {
     if (view == PCA) {
-        $.post("pca", {'data': 'received'}, plot_scree_plot);
+        $.post("pca", {'data': 'received'}, plot_pca);
     } else if (view == DASHBOARD) {
         $.post("", {'data': 'received'}, plot_dashboard);
     } else if (view == "PCA Scatter Stratified Sampled Data") {
@@ -30,8 +30,12 @@ function plot_dashboard(data) {
     draw_bar_chart(data.crime_bar_data);
 }
 
+function plot_pca(data) {
+    plot_scree_plot(data.chart_data);
+    // plot_sum_squared_loadings(data.chart_data);
+}
+
 function draw_bar_chart(data) {
-    console.log("drawing bar chart");
     const first_box_boundary = d3.select("#barchart_crime").node().getBoundingClientRect();
     data = JSON.parse(data);
     data.forEach(function (d) {
@@ -71,7 +75,7 @@ function draw_bar_chart(data) {
         return d["Total Crimes"];
     })]);
 
-    rectg = svg.append("g")
+    var rectg = svg.append("g")
         .attr("class", "xAxis")
         .attr("transform", "translate(0," + height + ")")
         .call(xAxis)
@@ -158,10 +162,9 @@ function create_pie(data) {
     var groupedChart = svg.append("g")
         .attr("transform", "translate(" + ((margin.left) + (margin.right) + width) / 2 + "," + ((margin.left) + (margin.right) + height) / 2 + ")");
 
-    var pie = d3.pie()
-        .value(function (d) {
-            return d.total_crime;
-        });
+    var pie = d3.pie().value(function (d) {
+        return d.total_crime;
+    });
 
     var arc = d3.arc().outerRadius(radius - 1).innerRadius(0);
 
@@ -175,7 +178,7 @@ function create_pie(data) {
         })
         .attr("d", arc)
         .on("mouseover", function (d, i) {
-            arc = d3.arc().innerRadius(0).outerRadius(radius+10)
+            arc = d3.arc().innerRadius(0).outerRadius(radius + 10)
             d3.select(this).transition().duration(400).attr("d", arc);
             d3.select("#tooltip").html(pieTooltipHtml(d))
                 .style('color', 'black').style('font-size', '10.5px').style('text-align', 'center')
@@ -186,7 +189,7 @@ function create_pie(data) {
             d3.select("#tooltip").style('left', (d3.event.layerX - 20) + 'px').style('top', (d3.event.layerY + 15) + 'px');
         })
         .on("mouseout", function () {
-              arc = d3.arc().innerRadius(0).outerRadius(radius)
+            arc = d3.arc().innerRadius(0).outerRadius(radius)
             d3.select(this).transition().duration(400).attr("d", arc);
             d3.select("#tooltip").style('opacity', 0).style('display', 'none');
         });
@@ -223,10 +226,17 @@ function create_pie(data) {
 
 function tooltipHtml(d, data) {   /* function to create html content string in tooltip div. */
     //d is the id of the state.. get the row which has this id
-    d.id = +d.id;
-    return "<h4>" + data[d.id].State + "</h4><table>" +
-        "<tr><td>Violent Crimes</td><td>" + (data[d.id]['Violent Crime']) + "</td></tr>" +
-        "<tr><td>Total Crimes</td><td>" + (data[d.id]['Total Crimes']) + "</td></tr>" +
+    var tuple = [];
+    data.forEach(function (row) {
+        d.id = +d.id;
+        if (row.id === d.id) {
+            tuple = row;
+            return;
+        }
+    });
+    return "<h4>" + tuple.State + "</h4><table>" +
+        "<tr><td>Violent Crimes</td><td>" + (tuple['Violent Crime']) + "</td></tr>" +
+        "<tr><td>Total Crimes</td><td>" + (tuple['Total Crimes']) + "</td></tr>" +
         "</table>";
 }
 
@@ -246,7 +256,6 @@ function pieTooltipHtml(d) {   /* function to create html content string in tool
 
 function draw_all_crimes(data) {
     d3.select(".chart-container").remove();
-    data = JSON.parse(data);
     d3.select(".container-fluid")
         .append("div")
         .attr("class", "chart-container")
@@ -262,7 +271,7 @@ function draw_all_crimes(data) {
         .style("color", "#fff")
         .style("background-color", "#6d7fcc")
         .text("Crimes Across States")
-        .style("padding", "5px");
+    //.style("padding", "5px");
 
     d3.select(".flex-container")
         .append("div")
@@ -281,12 +290,12 @@ function draw_all_crimes(data) {
         .append("div")
         .attr("class", "first-box second-box");
 
-
     var first_box_boundary = d3.select("#usmap-box").node().getBoundingClientRect();
 
     var width = first_box_boundary.width - (margin.left) - (margin.right),
         height = first_box_boundary.height - (margin.top) - (margin.bottom);
 
+    data = JSON.parse(data);
     d3.json("https://d3js.org/us-10m.v1.json", function (error, unitedStates) {
         if (error) throw error;
         const us_map = topojson.feature(unitedStates, unitedStates.objects.states);
@@ -339,7 +348,7 @@ function draw_all_crimes(data) {
 
 //plots scree plot
 function plot_scree_plot(data) {
-    data = JSON.parse(data.chart_data);
+    data = JSON.parse(data);
     console.log(data);
     data.forEach(function (d) {
         d.eigen_values = d.eigen_values;
@@ -347,14 +356,10 @@ function plot_scree_plot(data) {
         d.sum_sqaured_loadings = d.sum_sqaured_loadings;
         d.features_name = d.features_name;
     });
-
     d3.select(".chart-container").remove();
-
     // Set the dimensions of the canvas / graph
-
     var markIDX = 0;
     var markIDY = 0;
-
     d3.select(".container-fluid")
         .append("div")
         .attr("class", "chart-container")
@@ -365,7 +370,8 @@ function plot_scree_plot(data) {
 
     d3.select(".flex-container1")
         .append("div")
-        .attr("class", "first-box second-box");
+        .attr("class", "first-box second-box")
+        .attr("id", "sum_squared_loadings")
 
     var first_box_boundary = d3.select(".first-box").node().getBoundingClientRect();
     console.log(first_box_boundary.height);
@@ -374,7 +380,7 @@ function plot_scree_plot(data) {
         height = first_box_boundary.height - (2 * margin.top) - (2 * margin.bottom);
 
     // Set the ranges
-    var x = d3.scaleLinear().range([0, width]);
+    var x = d3.scaleBand().range([0, width]).padding(0.5);
     var y = d3.scaleLinear().range([height, 0]);
 
     // Define the axes
@@ -385,20 +391,15 @@ function plot_scree_plot(data) {
     var value_line = d3.line()
         .x(function (d, i) {
             if (i == 2) {
-                markIDX = x(d.pca_component);
+                markIDX = x(d.pca_component) + x.bandwidth() / 2;
                 markIDY = y(d.eigen_values)
             }
-            return x(d.pca_component);
+            return x(d.pca_component) + x.bandwidth() / 2;
         })
         .y(function (d) {
             return y(d.eigen_values);
         });
-
-
-    // Scale the range of the data
-    x.domain(d3.extent(data, function (d) {
-        return d.pca_component - 1;
-    }));
+    x.domain(data.map(d => d.pca_component));
     y.domain([0, d3.max(data, function (d) {
         return d.eigen_values;
     })]);
@@ -425,7 +426,6 @@ function plot_scree_plot(data) {
         .attr("x", (width / 2))
         .text("PCA Components");
     ;
-
     // Add the Y Axis
     svg_scree.append("g")
         .attr("class", "yaxes")
@@ -438,6 +438,21 @@ function plot_scree_plot(data) {
         .attr("dy", "1em")
         .text("Eigen Values");
 
+    svg_scree.selectAll(".bar")
+        .data(data)
+        .enter().append("rect")
+        .style("fill", "#fba55f")
+        //==.attr("fill-opacity",0.8)
+        .attr("x", function (d, i) {
+            return x(d.pca_component);
+        })
+        .attr("y", function (d) {
+            return y(d.eigen_values);
+        })
+        .attr("width", x.bandwidth())
+        .attr("height", function (d) {
+            return height - y(d.eigen_values);
+        });
     svg_scree.append("text")
         .attr("x", (width / 2))
         .attr("y", 0 - (margin.top / 2))
@@ -450,7 +465,6 @@ function plot_scree_plot(data) {
     svg_scree.append("path")
         .attr("class", "line")
         .attr("d", value_line(data));
-
 
     svg_scree.append("circle")
         .attr("class", "marker")
@@ -465,10 +479,113 @@ function plot_scree_plot(data) {
         .attr("class", "point")
         .attr("r", 3)
         .attr("cx", function (d, i) {
-            return x(d.pca_component)
+            return x(d.pca_component) + x.bandwidth() / 2;
         })
         .attr("cy", function (d) {
             return y(d.eigen_values)
+        });
+
+}
+
+function plot_sum_squared_loadings(data) {
+    const first_box_boundary = d3.select("#sum_squared_loadings").node().getBoundingClientRect();
+    data = JSON.parse(data);
+    console.log(data);
+    data.forEach(function (d) {
+        d.eigen_values = +d.eigen_values;
+        d.pca_component = +d.pca_component;
+        d.sum_sqaured_loadings = +d.sum_sqaured_loadings;
+        d.features_name = d.features_name;
+    });
+
+    var width = first_box_boundary.width - (2 * margin.left) - (2 * margin.right),
+        height = first_box_boundary.height - (margin.top) - (margin.bottom);
+
+    var chart_header = d3.select("#sum_squared_loadings")
+        .append("div")
+        .attr("class", "chart-header")
+        .attr("id", "pie1-header")
+        .style("color", "#fff")
+        .style("background-color", "#6d7fcc")
+        .text("Violent Crimes Committed across USA")
+        .style("padding", "5px");
+
+    var svg = d3.select("#sum_squared_loadings")
+        .append("svg")
+        .attr("width", width + 1.5 * margin.left + 1.5 * margin.right)
+        .attr("height", height + margin.top + margin.bottom);
+
+    svg.call(tip);
+    svg = svg.append("g").attr("transform",
+        "translate(" + 100 + "," + 50 + ")");
+
+    //height = 250;
+    xScale = d3.scaleBand().range([0, width]).padding(0.1);
+    yScale = d3.scaleLinear().range([height, 0]);
+
+    var xAxis = d3.axisBottom(xScale).tickSizeOuter(0);
+    var yAxis = d3.axisLeft(yScale).ticks(5);
+
+    xScale.domain(data.map(d => d.features_name));
+    yScale.domain([0, d3.max(data, function (d) {
+        return d.eigen_values;
+    })]);
+
+    var rectg = svg.append("g")
+        .attr("class", "xAxis")
+        .attr("transform", "translate(0," + height + ")")
+        .call(xAxis)
+        .selectAll("text")
+        .style("text-anchor", "end")
+        .attr("dx", "-.8em")
+        .attr("dy", "-.55em")
+        .attr("transform", "rotate(-90)");
+    svg.append("g")
+        .attr("class", "yAxis")
+        .call(yAxis)
+        .append("text")
+        .attr("y", 6)
+        .attr("dy", "-5.1em")
+        .attr("transform", "rotate(-90)")
+        .attr("stroke", "black")
+        .attr("text-anchor", "end")
+        .text("Count");
+    svg.selectAll(".bar")
+        .data(data)
+        .enter().append("rect")
+        .style("fill", "steelblue")
+        .attr("class", "bar")
+        .attr("x", function (d, i) {
+            return xScale(d.features_name);
+        })
+        .attr("y", function (d) {
+            return yScale(d.eigen_values);
+        })
+        .attr("width", xScale.bandwidth())
+        .attr("height", function (d) {
+            return height - yScale(d.eigen_values);
+        })
+        .on("mouseover", function (d, ind) {
+            d3.select(this).style("fill", "#d13c4b").transition().duration(400)
+                .attr("height", function (d) {
+                    return height - yScale(d.eigen_values) + 5;
+                })
+                .attr('width', xScale.bandwidth() - 5)
+                .attr("y", function (d) {
+                    return yScale(d.eigen_values) - 5;
+                })
+            tip.show(d.eigen_values, ind);
+        })
+        .on("mouseout", function (d) {
+            tip.hide(d.sum_sqaured_loadings);
+            d3.select(this).style("fill", "steelblue").transition().duration(400)
+                .attr('width', xScale.bandwidth())
+                .attr("y", function (d) {
+                    return yScale(d.eigen_values);
+                })
+                .attr("height", function (d) {
+                    return height - yScale(d.eigen_values);
+                });
         });
 }
 
