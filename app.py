@@ -23,9 +23,10 @@ def index():
         if request.form['data'] == 'received':
              chart_data = us_map_df.to_dict(orient='records')
              area_pie_data = area_pie_df.to_dict(orient='records')
+             crime_bar_data = crime_barchart_df.to_dict(orient='records')
              chart_data = json.dumps(chart_data, indent=2)
              area_pie_data = json.dumps(area_pie_data, indent=2)
-             crime_bar_data = json.dumps(crime_bar_chart, indent=2)
+             crime_bar_data = json.dumps(crime_bar_data, indent=2)
              data = {'chart_data': chart_data,'area_pie_data':area_pie_data, 'crime_bar_data':crime_bar_data}
              return jsonify(data)
     return render_template("index.html")
@@ -69,8 +70,6 @@ def pca():
     global scaled_df
     global features_list
 
-    print(sum_sqaured_loading)
-    print(features_list)
     indices = list(range(1, 13))
     zip_list = list(zip(indices, variance,sum_sqaured_loading,features_list))
 
@@ -83,6 +82,56 @@ def pca():
              data = {'chart_data': chart_data}
              return jsonify(data)
     return ""
+
+@app.route("/draw_bar_chart", methods = ['POST', 'GET'])
+def scatter_plot_matrix_random():
+    df = orig_data.groupby(['Year', 'id', 'State', 'State Population'])["Rape"].apply(
+        lambda x: x.astype(int).sum()).reset_index()
+    df = df.loc[df.id == 1]
+    chart_data = df.to_dict(orient='records')
+    chart_data = json.dumps(chart_data, indent=2)
+    data = {'chart_data': chart_data}
+    return jsonify(data)
+
+#Task 3 Part 3 - Scatter Matrix Plot for random, stratified and original dataset
+@app.route("/scatter_matrix", methods = ['POST', 'GET'])
+def scatter_matrix():
+    global features_list
+    global top_features_original
+    global top_features_random
+    global top_features_stratified
+    global stratified_sampled_data
+    global scaled_df
+    global random_sampled_data
+
+    if request.method == 'POST':
+        if request.form['data'] == 'random':
+            data = pd.DataFrame()
+            data[features_list[top_features_random[0]-1]] = random_sampled_data[features_list[top_features_random[0]-1]]
+            data[features_list[top_features_random[1]-1]] = random_sampled_data[features_list[top_features_random[1]-1]]
+            data[features_list[top_features_random[2]-1]] = random_sampled_data[features_list[top_features_random[2]-1]]
+            chart_data = data.to_dict(orient='records')
+            chart_data = json.dumps(chart_data, indent=2)
+            data = {'chart_data': chart_data}
+            return jsonify(data)
+        elif request.form['data'] == 'stratified':
+            data = pd.DataFrame()
+            data[features_list[top_features_stratified[0]-1]] = stratified_sampled_data[features_list[top_features_stratified[0]-1]]
+            data[features_list[top_features_stratified[1]-1]] = stratified_sampled_data[features_list[top_features_stratified[1]-1]]
+            data[features_list[top_features_stratified[2]-1]] = stratified_sampled_data[features_list[top_features_stratified[2]-1]]
+            chart_data = data.to_dict(orient='records')
+            chart_data = json.dumps(chart_data, indent=2)
+            data = {'chart_data': chart_data}
+            return jsonify(data)
+        else:
+            data = pd.DataFrame()
+            data[features_list[top_features_original[0]-1]] = scaled_df[features_list[top_features_original[0]-1]]
+            data[features_list[top_features_original[1]-1]] = scaled_df[features_list[top_features_original[1]-1]]
+            data[features_list[top_features_original[2]-1]] = scaled_df[features_list[top_features_original[2]-1]]
+            chart_data = data.to_dict(orient='records')
+            chart_data = json.dumps(chart_data, indent=2)
+            data = {'chart_data': chart_data}
+            return jsonify(data)
 
 #returns eigen values and loadings
 def get_pca_parameters(data):
@@ -103,7 +152,6 @@ def get_scaled_data():
     global df_pca
     # Scaling the data to perform PCA USing MinMaxScaler to scale all features in range of 0-1
     columns = df_pca.columns
-    print(columns)
     scaler = StandardScaler()
     scaled_df = scaler.fit_transform(df_pca)
     scaled_df = pd.DataFrame(scaled_df, columns=columns)
@@ -129,13 +177,13 @@ def print_table_loadings(loading,sum_sqaured_loading):
     result_list = result.tolist()
     result_list = sorted(result_list, key=lambda l: l[5], reverse=True)
 
-    print('Table to show sum of squared loadings\n')
-    for row in result_list:
-        print(' '.join([str(elem) for elem in row]))
+    # print('Table to show sum of squared loadings\n')
+    # for row in result_list:
+    #     print(' '.join([str(elem) for elem in row]))
     return [int(i[0]) for i in result_list]
 
 if __name__ == "__main__":
-    global us_map_df, scaled_df, df_pca, area_pie_df, crime_bar_chart
+    global us_map_df, scaled_df, df_pca, area_pie_df, crime_barchart_df
     orig_data = pd.read_csv('data/crime-dataset.csv')
     df_pca = orig_data.copy(deep=True)
 
@@ -143,9 +191,12 @@ if __name__ == "__main__":
         lambda x: x.astype(int).sum()).reset_index()
     area_pie_df = orig_data.groupby(['Area'])["Total Crimes"].apply(
         lambda x: x.astype(int).sum()).reset_index()
-    crime_bar_chart = orig_data.groupby(['Year'])["Total Crimes"].apply(
+    crime_barchart_df = orig_data.groupby(['Year'])["Total Crimes"].apply(
         lambda x: x.astype(int).sum()).reset_index()
-    
+    crime_barchart_df.Year = crime_barchart_df.Year.astype(str)
+    print(crime_barchart_df)
+    print(area_pie_df.dtypes)
+    print(crime_barchart_df.dtypes)
     clean_dataset()
     #dataframe to store normalized data
     scaled_df = pd.DataFrame()
@@ -160,6 +211,6 @@ if __name__ == "__main__":
     top_features = print_table_loadings(loading,sum_sqaured_loading)
 
     features_list = list(scaled_df.columns.values)
-    print("Top 3 features with highest PCA loadings - ", features_list[top_features[0]-1], ', ',features_list[top_features[1]-1], ', ',features_list[top_features[2]-1])
+    #print("Top 3 features with highest PCA loadings - ", features_list[top_features[0]-1], ', ',features_list[top_features[1]-1], ', ',features_list[top_features[2]-1])
 
     app.run(debug=True)

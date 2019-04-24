@@ -3,56 +3,160 @@ const pca_view_opt = d3.select(".pca_option");
 const dash_view_opt = d3.select(".dash_option");
 const PCA = "PCA_ANALYSIS";
 const DASHBOARD = "DASHBOARD"
-var color = {}, stateNames = {}, violentCrime = {}, totalCrime = {};
 const margin = {top: 30, right: 20, bottom: 30, left: 50};
 $.post("", {'data': 'received'}, plot_dashboard);
+var tip = d3.tip()
+    .attr('class', 'd3-tip')
+    .offset([-20, 0])
+    .html(function (d) {
+        return "<strong>Count:</strong> <span style='color:red'>" + d + "</span>";
+    });
+
 function route(view) {
-    if(view == PCA){
+    if (view == PCA) {
         $.post("pca", {'data': 'received'}, plot_scree_plot);
-    }
-    else if (view == DASHBOARD){
+    } else if (view == DASHBOARD) {
         $.post("", {'data': 'received'}, plot_dashboard);
-    }
-    else if(view == "PCA Scatter Stratified Sampled Data"){
-        $.post("pca_scatter", {'data': 'stratified'}, function(data) {
-            plot_scatter_plot(data,"2D Scatter Plot of Projection of Stratified Sampled Data on top 2 PCA Vectors");
+    } else if (view == "PCA Scatter Stratified Sampled Data") {
+        $.post("pca_scatter", {'data': 'stratified'}, function (data) {
+            plot_scatter_plot(data, "2D Scatter Plot of Projection of Stratified Sampled Data on top 2 PCA Vectors");
         })
     }
 }
 
-function plot_dashboard(data){
-	draw_all_crimes(data);
-	create_pie(data);
+function plot_dashboard(data) {
+    draw_all_crimes(data.chart_data);
+    create_pie(data.area_pie_data);
+    draw_bar_chart(data.crime_bar_data);
+}
+
+function draw_bar_chart(data) {
+    console.log("drawing bar chart");
+    const first_box_boundary = d3.select("#barchart_crime").node().getBoundingClientRect();
+    data = JSON.parse(data);
+    data.forEach(function (d) {
+        d.Year = +d['Year'];
+        d["Total Crimes"] = +d['Total Crimes'];
+    });
+    var width = first_box_boundary.width - (2 * margin.left) - (2 * margin.right),
+        height = first_box_boundary.height - (margin.top) - (margin.bottom);
+
+    var chart_header = d3.select("#barchart_crime")
+        .append("div")
+        .attr("class", "chart-header")
+        .attr("id", "pie1-header")
+        .style("color", "#fff")
+        .style("background-color", "#6d7fcc")
+        .text("Violent Crimes Committed across USA")
+        .style("padding", "5px");
+
+    var svg = d3.select("#barchart_crime")
+        .append("svg")
+        .attr("width", width + 1.5 * margin.left + 1.5 * margin.right)
+        .attr("height", height + margin.top + margin.bottom);
+
+    svg.call(tip);
+    svg = svg.append("g").attr("transform",
+        "translate(" + 100 + "," + 50 + ")");
+
+    height = 250;
+    xScale = d3.scaleBand().range([0, width]).padding(0.5);
+    yScale = d3.scaleLinear().range([height, 0]);
+
+    var xAxis = d3.axisBottom(xScale).tickSizeOuter(0);
+    var yAxis = d3.axisLeft(yScale).ticks(5);
+
+    xScale.domain(data.map(d => d.Year));
+    yScale.domain([0, d3.max(data, function (d) {
+        return d["Total Crimes"];
+    })]);
+
+    rectg = svg.append("g")
+        .attr("class", "xAxis")
+        .attr("transform", "translate(0," + height + ")")
+        .call(xAxis)
+        .selectAll("text")
+        .style("text-anchor", "end")
+        .attr("dx", "-.8em")
+        .attr("dy", "-.55em")
+        .attr("transform", "rotate(-90)");
+    svg.append("g")
+        .attr("class", "yAxis")
+        .call(yAxis)
+        .append("text")
+        .attr("y", 6)
+        .attr("dy", "-5.1em")
+        .attr("transform", "rotate(-90)")
+        .attr("stroke", "black")
+        .attr("text-anchor", "end")
+        .text("Count");
+    svg.selectAll(".bar")
+        .data(data)
+        .enter().append("rect")
+        .style("fill", "steelblue")
+        .attr("class", "bar")
+        .attr("x", function (d, i) {
+            return xScale(d.Year);
+        })
+        .attr("y", function (d) {
+            return yScale(d['Total Crimes']);
+        })
+        .attr("width", xScale.bandwidth())
+        .attr("height", function (d) {
+            return height - yScale(d['Total Crimes']);
+        })
+        .on("mouseover", function (d, ind) {
+            d3.select(this).style("fill", "#d13c4b").transition().duration(400)
+                .attr("height", function (d) {
+                    return height - yScale(d["Total Crimes"]) + 5;
+                })
+                .attr('width', xScale.bandwidth() - 5)
+                .attr("y", function (d) {
+                    return yScale(d["Total Crimes"]) - 5;
+                })
+            tip.show(d["Total Crimes"], ind);
+        })
+        .on("mouseout", function (d) {
+            tip.hide(d["Total Crimes"]);
+            d3.select(this).style("fill", "steelblue").transition().duration(400)
+                .attr('width', xScale.bandwidth())
+                .attr("y", function (d) {
+                    return yScale(d["Total Crimes"]);
+                })
+                .attr("height", function (d) {
+                    return height - yScale(d["Total Crimes"]);
+                });
+        });
 }
 
 function create_pie(data) {
     var first_box_boundary = d3.select("#pie1").node().getBoundingClientRect();
-    data = JSON.parse(data.area_pie_data);
-    data.forEach(function(d) {
+    data = JSON.parse(data);
+    data.forEach(function (d) {
         d.area = d['Area'];
         d.total_crime = d['Total Crimes'];
     });
     var width = first_box_boundary.width - (margin.left) - (margin.right),
         height = first_box_boundary.height - (margin.top) - (margin.bottom);
 
-    const radius = Math.min(width,height)/2;
+    const radius = Math.min(width, height) / 2;
 
     var chart_header = d3.select("#pie1")
         .append("div")
         .attr("class", "chart-header")
         .attr("id", "pie1-header")
         .style("color", "#fff")
-        .style("background-color","#6d7fcc")
+        .style("background-color", "#6d7fcc")
         .text("Crimes Proportion Across Different Areas in State")
-        .style("padding","5px");
+        .style("padding", "5px");
 
     var svg = d3.select("#pie1")
         .append("svg")
         .attr("width", width + margin.left + margin.right)
-        .attr("height", height +margin.top + margin.bottom);
+        .attr("height", height + margin.top + margin.bottom);
 
     var groupedChart = svg.append("g")
-        .attr("transform", "translate(" + ((margin.left) + (margin.right) + width)/2+ "," + ((margin.left) + (margin.right) + height)/2 + ")");
+        .attr("transform", "translate(" + ((margin.left) + (margin.right) + width) / 2 + "," + ((margin.left) + (margin.right) + height) / 2 + ")");
 
     var pie = d3.pie()
         .value(function (d) {
@@ -60,52 +164,54 @@ function create_pie(data) {
         });
 
     var arc = d3.arc()
-        .outerRadius(radius-1)
+        .outerRadius(radius - 1)
         .innerRadius(0);
 
     var label = d3.arc()
-        .outerRadius(radius-10)
-        .innerRadius(radius-40);
+        .outerRadius(radius - 10)
+        .innerRadius(radius - 40);
 
     groupedChart.selectAll("path")
         .data(pie(data))
         .enter()
         .append("path")
-        .style("stroke","white")
-        .style("fill",function(d,i){return  pieColors(i);})
-        .attr("d",arc)
-        .on("mouseover", function(d,i) {
+        .style("stroke", "white")
+        .style("fill", function (d, i) {
+            return pieColors(i);
+        })
+        .attr("d", arc)
+        .on("mouseover", function (d, i) {
             d3.select("#tooltip").html(pieTooltipHtml(d))
                 .style('color', 'black').style('font-size', '10.5px').style('text-align', 'center')
                 .style('display', 'block').style("left", d3.event.pageX + "px")
                 .style("top", d3.event.pageY + "px").style("opacity", 1);
         })
-        .on('mousemove', function(d,i) {
-            d3.select("#tooltip").style('left',(d3.event.layerX - 20)+'px').style('top',(d3.event.layerY + 15)+'px');
+        .on('mousemove', function (d, i) {
+            d3.select("#tooltip").style('left', (d3.event.layerX - 20) + 'px').style('top', (d3.event.layerY + 15) + 'px');
         })
-        .on("mouseout", function() {
+        .on("mouseout", function () {
             d3.select(this).transition().duration(400);
-            d3.select("#tooltip").style('opacity',0).style('display', 'none');
+            d3.select("#tooltip").style('opacity', 0).style('display', 'none');
         });
     var legendG = svg.selectAll(".legend")
         .data(pie(data))
         .enter().append("g")
-        .attr("transform", function(d,i){
+        .attr("transform", function (d, i) {
             return "translate(" + (width - 110) + "," + (i * 15 + 20) + ")";
         })
         .attr("class", "legend");
     legendG.append("rect")
         .attr("width", 10)
         .attr("height", 10)
-        .attr("fill", function(d, i) {
+        .attr("fill", function (d, i) {
             return pieColors(i);
         });
 
     legendG.append("text")
-        .text(function(d){
+        .text(function (d) {
             var y = "";
             if (d.data.area === "NMC")
-                y =  "Non Metropolitan County";
+                y = "Non Metropolitan County";
             else if (d.data.area === "MSA")
                 y = "Metropolitan Statistical Area";
             else
@@ -118,64 +224,65 @@ function create_pie(data) {
 
 }
 
-function tooltipHtml(d){   /* function to create html content string in tooltip div. */
+function tooltipHtml(d, data) {   /* function to create html content string in tooltip div. */
     //d is the id of the state.. get the row which has this id
-    return "<h4>"+stateNames[d.id]+"</h4><table>"+
-        "<tr><td>Violent Crimes</td><td>"+(violentCrime[d.id])+"</td></tr>"+
-        "<tr><td>Total Crimes</td><td>"+(totalCrime[d.id])+"</td></tr>"+
-        // "<tr><td>High</td><td>"+(d.high)+"</td></tr>"+
+    d.id = +d.id;
+    return "<h4>" + data[d.id].State + "</h4><table>" +
+        "<tr><td>Violent Crimes</td><td>" + (data[d.id]['Violent Crime']) + "</td></tr>" +
+        "<tr><td>Total Crimes</td><td>" + (data[d.id]['Total Crimes']) + "</td></tr>" +
         "</table>";
 }
 
-function pieTooltipHtml(d){   /* function to create html content string in tooltip div. */
+function pieTooltipHtml(d) {   /* function to create html content string in tooltip div. */
     //d is the id of the state.. get the row which has this id
     var x = Math.floor(((+d.data.total_crime)));
     var y = "";
     if (d.data.area === "NMC")
-        y =  "Non Metropolitan County";
+        y = "Non Metropolitan County";
     else if (d.data.area === "MSA")
         y = "Metropolitan Statistical Area";
     else
         y = "Cities Outside Metropolitan Area";
-    return y+" - "+x;
-    return "<h4>"+x+" - "+ "</h4>";
+    return y + " - " + x;
+    return "<h4>" + x + " - " + "</h4>";
 }
+
 function draw_all_crimes(data) {
     d3.select(".chart-container").remove();
-    data = JSON.parse(data.chart_data);
-    console.log(data);
+    data = JSON.parse(data);
     d3.select(".container-fluid")
         .append("div")
-        .attr("class","chart-container")
+        .attr("class", "chart-container")
         .append("div")
-        .attr("class","flex-container")
+        .attr("class", "flex-container")
         .append("div")
-        .attr("class","first-box")
+        .attr("class", "first-box")
         .attr("id", "usmap-box");
     var chart_header = d3.select("#usmap-box")
         .append("div")
         .attr("class", "chart-header")
         .attr("id", "pie1-header")
         .style("color", "#fff")
-        .style("background-color","#6d7fcc")
+        .style("background-color", "#6d7fcc")
         .text("Crimes Across States")
-        .style("padding","5px");
+        .style("padding", "5px");
 
     d3.select(".flex-container")
         .append("div")
-        .attr("class","first-box second-box");
+        .attr("class", "first-box second-box")
+        .attr("id", "barchart_crime");
 
     d3.select(".chart-container")
         .append("div")
-        .attr("class","flex-container")
+        .attr("class", "flex-container")
         .attr("id", "second-container")
         .append("div")
-        .attr("class","first-box")
+        .attr("class", "first-box")
         .attr("id", "pie1");
 
     d3.select("#second-container")
         .append("div")
-        .attr("class","first-box second-box");
+        .attr("class", "first-box second-box");
 
 
     var first_box_boundary = d3.select("#usmap-box").node().getBoundingClientRect();
@@ -183,28 +290,24 @@ function draw_all_crimes(data) {
     var width = first_box_boundary.width - (margin.left) - (margin.right),
         height = first_box_boundary.height - (margin.top) - (margin.bottom);
 
-    d3.json("https://d3js.org/us-10m.v1.json", function(error, unitedStates) {
+    d3.json("https://d3js.org/us-10m.v1.json", function (error, unitedStates) {
         if (error) throw error;
-        var us_map = topojson.feature(unitedStates, unitedStates.objects.states);
+        const us_map = topojson.feature(unitedStates, unitedStates.objects.states);
 
         var svg = d3.select("#usmap-box").append('div', "usmap")
             .append("svg")
             .attr("width", width + margin.left + margin.right)
-            .attr("height", height +margin.top + margin.bottom);
+            .attr("height", height + margin.top + margin.bottom);
 
         var projection = d3.geoIdentity()
-            .fitExtent([[margin.left,margin.right],[width,height]], us_map);
+            .fitExtent([[margin.left, margin.right], [width, height]], us_map);
 
         var path = d3.geoPath().projection(projection);
 
         data.forEach(function (d, i) {
-            stateNames[d.id] = d.State;
             d["Total Crimes"] = +d["Total Crimes"];
             d["Violent Crime"] = +d["Violent Crime"];
-            violentCrime[d.id] = d['Violent Crime'];
-            totalCrime[d.id] = d['Total Crimes'];
         });
-
         var pathSvg = svg.append("g")
             .attr("class", "states")
             .selectAll("path")
@@ -213,21 +316,23 @@ function draw_all_crimes(data) {
             .append("path")
             .style("fill", "#6d7fcc")
             .attr("d", path)
-            .on("mouseover", function(d,i) {
-                d3.select(this).style("fill","red");
-                d3.select("#tooltip").html(tooltipHtml(d))
+            .on("mouseover", function (d, i) {
+                d3.select(this).style("fill", "red");
+                d3.select("#tooltip").html(tooltipHtml(d, data))
                     .style('color', 'black').style('font-size', '10.5px').style('text-align', 'center')
                     .style('display', 'block').style("left", d3.event.pageX + "px")
                     .style("top", d3.event.pageY + "px").style("opacity", 1);
             })
-            .on('mousemove', function(d,i) {
-                d3.select("#tooltip").style('left',(d3.event.layerX - 20)+'px').style('top',(d3.event.layerY + 15)+'px');
+            .on('mousemove', function (d, i) {
+                d3.select("#tooltip").style('left', (d3.event.layerX - 20) + 'px').style('top', (d3.event.layerY + 15) + 'px');
             })
-            .on("mouseout", function() {
-                d3.select(this).style("fill","#6d7fcc").transition().duration(400);
-                d3.select("#tooltip").style('opacity',0).style('display', 'none');
+            .on("mouseout", function () {
+                d3.select(this).style("fill", "#6d7fcc").transition().duration(400);
+                d3.select("#tooltip").style('opacity', 0).style('display', 'none');
             })
-            .style("fill", function(d){ return {color:d3.interpolateRgb("#ffffcc", "#800026")(d["Total Crimes"]/10000)}});
+            .style("fill", function (d) {
+                return {color: d3.interpolateRgb("#ffffcc", "#800026")(d["Total Crimes"] / 10000)}
+            });
         svg.append("path").attr("class", "state-borders")
             .attr("d", path(topojson.mesh(unitedStates, unitedStates.objects.states, function (a, b) {
                 return a !== b;
@@ -236,10 +341,10 @@ function draw_all_crimes(data) {
 }
 
 //plots scree plot
-function  plot_scree_plot(data) {
+function plot_scree_plot(data) {
     data = JSON.parse(data.chart_data);
     console.log(data);
-    data.forEach(function(d) {
+    data.forEach(function (d) {
         d.eigen_values = d.eigen_values;
         d.pca_component = d.pca_component;
         d.sum_sqaured_loadings = d.sum_sqaured_loadings;
@@ -255,21 +360,21 @@ function  plot_scree_plot(data) {
 
     d3.select(".container-fluid")
         .append("div")
-        .attr("class","chart-container")
+        .attr("class", "chart-container")
         .append("div")
-        .attr("class","flex-container1")
+        .attr("class", "flex-container1")
         .append("div")
-        .attr("class","first-box");
+        .attr("class", "first-box");
 
     d3.select(".flex-container1")
         .append("div")
-        .attr("class","first-box second-box");
+        .attr("class", "first-box second-box");
 
     var first_box_boundary = d3.select(".first-box").node().getBoundingClientRect();
     console.log(first_box_boundary.height);
 
-    var width = first_box_boundary.width - (2*margin.left) - (2*margin.right),
-        height = first_box_boundary.height - (2*margin.top) - (2*margin.bottom);
+    var width = first_box_boundary.width - (2 * margin.left) - (2 * margin.right),
+        height = first_box_boundary.height - (2 * margin.top) - (2 * margin.bottom);
 
     // Set the ranges
     var x = d3.scaleLinear().range([0, width]);
@@ -281,27 +386,33 @@ function  plot_scree_plot(data) {
 
     // Define the line
     var value_line = d3.line()
-        .x(function(d,i) {
+        .x(function (d, i) {
             if (i == 2) {
                 markIDX = x(d.pca_component);
                 markIDY = y(d.eigen_values)
             }
-            return x(d.pca_component); })
-        .y(function(d) { return y(d.eigen_values); });
+            return x(d.pca_component);
+        })
+        .y(function (d) {
+            return y(d.eigen_values);
+        });
 
 
     // Scale the range of the data
-    x.domain(d3.extent(data, function(d) { return d.pca_component-1; }));
-    y.domain([0, d3.max(data, function(d) {
-        return d.eigen_values;  })]);
+    x.domain(d3.extent(data, function (d) {
+        return d.pca_component - 1;
+    }));
+    y.domain([0, d3.max(data, function (d) {
+        return d.eigen_values;
+    })]);
 
     var svg_scree = d3.select(".first-box")
         .append("div")
-        .attr("id","chart_scree")
-        .attr("class","scree-container")
+        .attr("id", "chart_scree")
+        .attr("class", "scree-container")
         .append("svg")
         .attr("width", width + margin.left + margin.right)
-        .attr("height", height + 1.5*margin.top + 1.5*margin.bottom)
+        .attr("height", height + 1.5 * margin.top + 1.5 * margin.bottom)
         .append("g")
         .attr("transform",
             "translate(" + margin.left + "," + margin.top + ")");
@@ -315,7 +426,8 @@ function  plot_scree_plot(data) {
         .attr("text-anchor", "middle")
         .attr("y", margin.left)
         .attr("x", (width / 2))
-        .text("PCA Components");;
+        .text("PCA Components");
+    ;
 
     // Add the Y Axis
     svg_scree.append("g")
@@ -325,7 +437,7 @@ function  plot_scree_plot(data) {
         .attr("fill", "#000")
         .attr("transform", "rotate(-90)")
         .attr("y", 0 - margin.left)
-        .attr("x",0 - (height / 2))
+        .attr("x", 0 - (height / 2))
         .attr("dy", "1em")
         .text("Eigen Values");
 
@@ -344,7 +456,7 @@ function  plot_scree_plot(data) {
 
 
     svg_scree.append("circle")
-        .attr("class","marker")
+        .attr("class", "marker")
         .attr("r", 9)
         .attr("cx", markIDX)
         .attr("cy", markIDY)
@@ -355,17 +467,21 @@ function  plot_scree_plot(data) {
         .enter().append("circle")
         .attr("class", "point")
         .attr("r", 3)
-        .attr("cx", function(d, i) { return x(d.pca_component) })
-        .attr("cy", function(d) { return y(d.eigen_values) });
+        .attr("cx", function (d, i) {
+            return x(d.pca_component)
+        })
+        .attr("cy", function (d) {
+            return y(d.eigen_values)
+        });
 }
 
-pca_view_opt.on('click', function(){
+pca_view_opt.on('click', function () {
     var event = d3.event;
     console.log("In PCA view");
     event.preventDefault();
     route(PCA);
 });
-dash_view_opt.on('click', function(){
+dash_view_opt.on('click', function () {
     var event = d3.event;
     console.log("In Dashboard view");
     event.preventDefault();
