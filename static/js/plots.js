@@ -1,3 +1,4 @@
+var pieColors = d3.scaleOrdinal(['#fba55f', '#d13c4b', '#4288b5', '#4da3b1', '#65b5aa', '#83cca5', '#a2d9a3', '#bfe5a0', '#d8ef9f', '#ebf7a6', '#f7faaf', '#fdf5ac', '#fee89a', '#fed585', '#fdbf70', '#f78851', '#ef6d4a', '#d13c4b', '#000075', '#808080', '#ef6d4a', '#000000']);
 const pca_view_opt = d3.select(".pca_option");
 const dash_view_opt = d3.select(".dash_option");
 const PCA = "PCA_ANALYSIS";
@@ -17,56 +18,6 @@ function route(view) {
             plot_scatter_plot(data,"2D Scatter Plot of Projection of Stratified Sampled Data on top 2 PCA Vectors");
         })
     }
-    else if(view == "PCA Scatter Original Sampled Data"){
-        $.post("pca_scatter", {'data': 'original'}, function(data) {
-            plot_scatter_plot(data,"2D Scatter Plot of Projection of Original Sampled Data on top 2 PCA Vectors");
-        })
-    }
-    else if(view == "MDS Euclidean Scatter Stratified Sampled Data"){
-        $.post("mds_euclidean", {'data': 'stratified'}, function(data) {
-            plot_scatter_plot(data,"2D Scatter Plot of MDS Euclidean on Stratified Sampled Data");
-        })
-    }
-    else if(view == "MDS Euclidean Scatter Original Sampled Data"){
-        $.post("mds_euclidean", {'data': 'original'}, function(data) {
-            plot_scatter_plot(data,"2D Scatter Plot of MDS Euclidean on Original Sampled Data");
-        })
-    }
-    else if(view == "MDS Euclidean Scatter Random Sampled Data"){
-        $.post("mds_euclidean", {'data': 'random'}, function(data) {
-            plot_scatter_plot(data,"2D Scatter Plot of MDS Euclidean on Random Sampled Data");
-        })
-    }
-    else if(view == "MDS Correlation Scatter Stratified Sampled Data"){
-        $.post("mds_correlation", {'data': 'stratified'}, function(data) {
-            plot_scatter_plot(data,"2D Scatter Plot of MDS Correlation on Stratified Sampled Data");
-        })
-    }
-    else if(view == "MDS Correlation Scatter Original Sampled Data"){
-        $.post("mds_correlation", {'data': 'original'}, function(data) {
-            plot_scatter_plot(data,"2D Scatter Plot of MDS Correlation on Original Sampled Data");
-        })
-    }
-    else if(view == "MDS Correlation Scatter Random Sampled Data"){
-        $.post("mds_correlation", {'data': 'random'}, function(data) {
-            plot_scatter_plot(data,"2D Scatter Plot of MDS Correlation on Random Sampled Data");
-        })
-    }
-    else if(view == "Scatter Matrix Plot Stratified Sampled Data"){
-        $.post("scatter_matrix", {'data': 'stratified'}, function(data) {
-            plot_scatter_matrix(data,"Scatter Matrix Plot of 3 highest PCA loaded attributes on Stratified Sampled Data");
-        })
-    }
-    else if(view == "Scatter Matrix Plot Original Data"){
-        $.post("scatter_matrix", {'data': 'original'}, function(data) {
-            plot_scatter_matrix(data,"Scatter Matrix Plot of 3 highest PCA loaded attributes on Original Data");
-        })
-    }
-    else if(view == "Scatter Matrix Plot Random Sampled Data"){
-        $.post("scatter_matrix", {'data': 'random'}, function(data) {
-            plot_scatter_matrix(data,"Scatter Matrix Plot of 3 highest PCA loaded attributes on Random Sampled Data");
-        })
-    }
 }
 
 function plot_dashboard(data){
@@ -81,7 +32,6 @@ function create_pie(data) {
         d.area = d['Area'];
         d.total_crime = d['Total Crimes'];
     });
-
     var width = first_box_boundary.width - (margin.left) - (margin.right),
         height = first_box_boundary.height - (margin.top) - (margin.bottom);
 
@@ -117,7 +67,6 @@ function create_pie(data) {
         .outerRadius(radius-10)
         .innerRadius(radius-40);
 
-    var pieColors = d3.scaleOrdinal(['#fba55f', '#d13c4b', '#4288b5', '#4da3b1', '#65b5aa', '#83cca5', '#a2d9a3', '#bfe5a0', '#d8ef9f', '#ebf7a6', '#f7faaf', '#fdf5ac', '#fee89a', '#fed585', '#fdbf70', '#f78851', '#ef6d4a', '#d13c4b', '#000075', '#808080', '#ef6d4a', '#000000']);
     groupedChart.selectAll("path")
         .data(pie(data))
         .enter()
@@ -145,7 +94,6 @@ function create_pie(data) {
             return "translate(" + (width - 110) + "," + (i * 15 + 20) + ")";
         })
         .attr("class", "legend");
-
     legendG.append("rect")
         .attr("width", 10)
         .attr("height", 10)
@@ -170,7 +118,6 @@ function create_pie(data) {
 
 }
 
-
 function tooltipHtml(d){   /* function to create html content string in tooltip div. */
     //d is the id of the state.. get the row which has this id
     return "<h4>"+stateNames[d.id]+"</h4><table>"+
@@ -191,8 +138,7 @@ function pieTooltipHtml(d){   /* function to create html content string in toolt
     else
         y = "Cities Outside Metropolitan Area";
     return y+" - "+x;
-    return "<h4>"+x+" - "+ "</h4>"
-        ;
+    return "<h4>"+x+" - "+ "</h4>";
 }
 function draw_all_crimes(data) {
     d3.select(".chart-container").remove();
@@ -278,18 +224,14 @@ function draw_all_crimes(data) {
                 d3.select("#tooltip").style('left',(d3.event.layerX - 20)+'px').style('top',(d3.event.layerY + 15)+'px');
             })
             .on("mouseout", function() {
-                d3.select(this).style("fill","#6d7fcc");
-                d3.select(this).transition().duration(400);
+                d3.select(this).style("fill","#6d7fcc").transition().duration(400);
                 d3.select("#tooltip").style('opacity',0).style('display', 'none');
             })
             .style("fill", function(d){ return {color:d3.interpolateRgb("#ffffcc", "#800026")(d["Total Crimes"]/10000)}});
-        svg.append("path")
-            .attr("class", "state-borders")
+        svg.append("path").attr("class", "state-borders")
             .attr("d", path(topojson.mesh(unitedStates, unitedStates.objects.states, function (a, b) {
                 return a !== b;
             })))
-
-        //adding tooltip
     });
 }
 
@@ -415,8 +357,6 @@ function  plot_scree_plot(data) {
         .attr("r", 3)
         .attr("cx", function(d, i) { return x(d.pca_component) })
         .attr("cy", function(d) { return y(d.eigen_values) });
-
-
 }
 
 pca_view_opt.on('click', function(){
