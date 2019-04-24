@@ -25,9 +25,8 @@ def index():
              area_pie_data = area_pie_df.to_dict(orient='records')
              chart_data = json.dumps(chart_data, indent=2)
              area_pie_data = json.dumps(area_pie_data, indent=2)
-             print(chart_data)
-             print(area_pie_data)
-             data = {'chart_data': chart_data,'area_pie_data':area_pie_data}
+             crime_bar_data = json.dumps(crime_bar_chart, indent=2)
+             data = {'chart_data': chart_data,'area_pie_data':area_pie_data, 'crime_bar_data':crime_bar_data}
              return jsonify(data)
     return render_template("index.html")
 
@@ -85,46 +84,6 @@ def pca():
              return jsonify(data)
     return ""
 
-#Task 3 Part 3 - Scatter Matrix Plot for random, stratified and original dataset
-@app.route("/scatter_matrix", methods = ['POST', 'GET'])
-def scatter_matrix():
-    global features_list
-    global top_features_original
-    global top_features_random
-    global top_features_stratified
-    global stratified_sampled_data
-    global scaled_df
-    global random_sampled_data
-
-    if request.method == 'POST':
-        if request.form['data'] == 'random':
-            data = pd.DataFrame()
-            data[features_list[top_features_random[0]-1]] = random_sampled_data[features_list[top_features_random[0]-1]]
-            data[features_list[top_features_random[1]-1]] = random_sampled_data[features_list[top_features_random[1]-1]]
-            data[features_list[top_features_random[2]-1]] = random_sampled_data[features_list[top_features_random[2]-1]]
-            chart_data = data.to_dict(orient='records')
-            chart_data = json.dumps(chart_data, indent=2)
-            data = {'chart_data': chart_data}
-            return jsonify(data)
-        elif request.form['data'] == 'stratified':
-            data = pd.DataFrame()
-            data[features_list[top_features_stratified[0]-1]] = stratified_sampled_data[features_list[top_features_stratified[0]-1]]
-            data[features_list[top_features_stratified[1]-1]] = stratified_sampled_data[features_list[top_features_stratified[1]-1]]
-            data[features_list[top_features_stratified[2]-1]] = stratified_sampled_data[features_list[top_features_stratified[2]-1]]
-            chart_data = data.to_dict(orient='records')
-            chart_data = json.dumps(chart_data, indent=2)
-            data = {'chart_data': chart_data}
-            return jsonify(data)
-        else:
-            data = pd.DataFrame()
-            data[features_list[top_features_original[0]-1]] = scaled_df[features_list[top_features_original[0]-1]]
-            data[features_list[top_features_original[1]-1]] = scaled_df[features_list[top_features_original[1]-1]]
-            data[features_list[top_features_original[2]-1]] = scaled_df[features_list[top_features_original[2]-1]]
-            chart_data = data.to_dict(orient='records')
-            chart_data = json.dumps(chart_data, indent=2)
-            data = {'chart_data': chart_data}
-            return jsonify(data)
-
 #returns eigen values and loadings
 def get_pca_parameters(data):
     pca = PCA()
@@ -134,7 +93,6 @@ def get_pca_parameters(data):
 #cleans the dataset for PCA
 def clean_dataset():
     global df_pca
-
     df_pca.drop('State', axis = 1, inplace=True)
     df_pca.drop('Area', axis = 1, inplace=True)
     df_pca.drop('code', axis = 1, inplace=True)
@@ -177,7 +135,7 @@ def print_table_loadings(loading,sum_sqaured_loading):
     return [int(i[0]) for i in result_list]
 
 if __name__ == "__main__":
-    global us_map_df, scaled_df, df_pca, area_pie_df
+    global us_map_df, scaled_df, df_pca, area_pie_df, crime_bar_chart
     orig_data = pd.read_csv('data/crime-dataset.csv')
     df_pca = orig_data.copy(deep=True)
 
@@ -185,9 +143,9 @@ if __name__ == "__main__":
         lambda x: x.astype(int).sum()).reset_index()
     area_pie_df = orig_data.groupby(['Area'])["Total Crimes"].apply(
         lambda x: x.astype(int).sum()).reset_index()
-    print(area_pie_df)
-    print(us_map_df)
-
+    crime_bar_chart = orig_data.groupby(['Year'])["Total Crimes"].apply(
+        lambda x: x.astype(int).sum()).reset_index()
+    
     clean_dataset()
     #dataframe to store normalized data
     scaled_df = pd.DataFrame()
