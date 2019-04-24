@@ -4,7 +4,7 @@ const PCA = "PCA_ANALYSIS";
 const DASHBOARD = "DASHBOARD"
 var color = {}, stateNames = {}, violentCrime = {}, totalCrime = {};
 const margin = {top: 30, right: 20, bottom: 30, left: 50};
-
+$.post("", {'data': 'received'}, plot_dashboard);
 function route(view) {
     if(view == PCA){
         $.post("pca", {'data': 'received'}, plot_scree_plot);
