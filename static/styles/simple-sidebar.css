@@ -11,7 +11,9 @@ body {
     stroke: #ddd;
 }
 
-
+.btn-primary, .btn-primary:hover, .btn-primary:active, .btn-primary:visited {
+    background-color: #6d7fcc !important;
+}
 .axis path,
 .axes line {
     fill: none;
@@ -48,7 +50,6 @@ path {
     display: flex; /* Standard syntax */
 }
 .container-fluid .flex-container .first-box{
-  padding: 10px;
   margin: 5px auto;
   margin-right: 5px;
   border-style: solid;
@@ -61,7 +62,6 @@ path {
 
 .container-fluid .flex-container1 .first-box{
     width: 100%;
-    padding: 10px;
     min-height: 350px;
     margin: 5px auto;
     border-style: solid;
