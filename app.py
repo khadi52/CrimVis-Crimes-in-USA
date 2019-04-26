@@ -36,16 +36,19 @@ def crime_granular():
     #return the original cleaned dataframe to plot the dashboard
         crime_usa_map = orig_data.groupby(['id', 'State'])[request.form['data']].apply(
             lambda x: x.astype(int).sum()).reset_index()
-        print(crime_usa_map)
         crime_area_pie = orig_data.groupby(['Area'])[request.form['data']].apply(
             lambda x: x.astype(int).sum()).reset_index()
         crime_area_pie.rename(columns={request.form['data']:'Total Crimes'}, inplace=True)
+        crime_bar_chart = orig_data.groupby(['Year'])[request.form['data']].apply(
+                lambda x: x.astype(int).sum()).reset_index()
+        crime_bar_chart.rename(columns={request.form['data']:'Total Crimes'}, inplace=True)
         chart_data = crime_usa_map.to_dict(orient='records')
         crime_area_pie = crime_area_pie.to_dict(orient='records')
+        crime_bar_chart = crime_bar_chart.to_dict(orient='records')
         chart_data = json.dumps(chart_data, indent=2)
         crime_area_pie = json.dumps(crime_area_pie, indent=2)
-        print(crime_area_pie)
-        data = {'chart_data': chart_data,'area_pie_data':crime_area_pie}
+        crime_bar_chart = json.dumps(crime_bar_chart, indent=2)
+        data = {'chart_data': chart_data,'area_pie_data':crime_area_pie,'crime_bar_data':crime_bar_chart}
         return jsonify(data)
 
 #Task 3 Part 1 - Plots the 2D scatter plot for all 3 dataset of top 2 PCA vectors
