@@ -31,6 +31,23 @@ def index():
              return jsonify(data)
     return render_template("index.html")
 
+@app.route("/crime", methods = ['POST'])
+def crime_granular():
+    #return the original cleaned dataframe to plot the dashboard
+        crime_usa_map = orig_data.groupby(['id', 'State'])[request.form['data']].apply(
+            lambda x: x.astype(int).sum()).reset_index()
+        print(crime_usa_map)
+        crime_area_pie = orig_data.groupby(['Area'])[request.form['data']].apply(
+            lambda x: x.astype(int).sum()).reset_index()
+        crime_area_pie.rename(columns={request.form['data']:'Total Crimes'}, inplace=True)
+        chart_data = crime_usa_map.to_dict(orient='records')
+        crime_area_pie = crime_area_pie.to_dict(orient='records')
+        chart_data = json.dumps(chart_data, indent=2)
+        crime_area_pie = json.dumps(crime_area_pie, indent=2)
+        print(crime_area_pie)
+        data = {'chart_data': chart_data,'area_pie_data':crime_area_pie}
+        return jsonify(data)
+
 #Task 3 Part 1 - Plots the 2D scatter plot for all 3 dataset of top 2 PCA vectors
 @app.route("/pca_scatter", methods = ['POST', 'GET'])
 def pca_scatter():
@@ -82,46 +99,6 @@ def pca():
              return jsonify(data)
     return ""
 
-#Task 3 Part 3 - Scatter Matrix Plot for random, stratified and original dataset
-@app.route("/scatter_matrix", methods = ['POST', 'GET'])
-def scatter_matrix():
-    global features_list
-    global top_features_original
-    global top_features_random
-    global top_features_stratified
-    global stratified_sampled_data
-    global scaled_df
-    global random_sampled_data
-
-    if request.method == 'POST':
-        if request.form['data'] == 'random':
-            data = pd.DataFrame()
-            data[features_list[top_features_random[0]-1]] = random_sampled_data[features_list[top_features_random[0]-1]]
-            data[features_list[top_features_random[1]-1]] = random_sampled_data[features_list[top_features_random[1]-1]]
-            data[features_list[top_features_random[2]-1]] = random_sampled_data[features_list[top_features_random[2]-1]]
-            chart_data = data.to_dict(orient='records')
-            chart_data = json.dumps(chart_data, indent=2)
-            data = {'chart_data': chart_data}
-            return jsonify(data)
-        elif request.form['data'] == 'stratified':
-            data = pd.DataFrame()
-            data[features_list[top_features_stratified[0]-1]] = stratified_sampled_data[features_list[top_features_stratified[0]-1]]
-            data[features_list[top_features_stratified[1]-1]] = stratified_sampled_data[features_list[top_features_stratified[1]-1]]
-            data[features_list[top_features_stratified[2]-1]] = stratified_sampled_data[features_list[top_features_stratified[2]-1]]
-            chart_data = data.to_dict(orient='records')
-            chart_data = json.dumps(chart_data, indent=2)
-            data = {'chart_data': chart_data}
-            return jsonify(data)
-        else:
-            data = pd.DataFrame()
-            data[features_list[top_features_original[0]-1]] = scaled_df[features_list[top_features_original[0]-1]]
-            data[features_list[top_features_original[1]-1]] = scaled_df[features_list[top_features_original[1]-1]]
-            data[features_list[top_features_original[2]-1]] = scaled_df[features_list[top_features_original[2]-1]]
-            chart_data = data.to_dict(orient='records')
-            chart_data = json.dumps(chart_data, indent=2)
-            data = {'chart_data': chart_data}
-            return jsonify(data)
-
 #returns eigen values and loadings
 def get_pca_parameters(data):
     pca = PCA()
@@ -171,12 +148,15 @@ def print_table_loadings(loading,sum_sqaured_loading):
     result_list = result.tolist()
     result_list = sorted(result_list, key=lambda l: l[5], reverse=True)
 
-    # print('Table to show sum of squared loadings\n')
-    # for row in result_list:
-    #     print(' '.join([str(elem) for elem in row]))
+    print('Table to show sum of squared loadings\n')
+    for row in result_list:
+        print(' '.join([str(elem) for elem in row]))
     return [int(i[0]) for i in result_list]
 
 if __name__ == "__main__":
+    global us_map_df, scaled_df, df_pca, area_pie_df
+    global ROBBERY_CRIME
+    ROBBERY_CRIME = 'Robbery'
     global us_map_df, scaled_df, df_pca, area_pie_df, crime_barchart_df
     orig_data = pd.read_csv('data/crime-dataset.csv')
     df_pca = orig_data.copy(deep=True)
@@ -201,7 +181,7 @@ if __name__ == "__main__":
     #printing table of top attributes with highest loadings
     top_features = print_table_loadings(loading,sum_sqaured_loading)
 
-    features_list = list(df_pca.columns.values)
-    #print("Top 3 features with highest PCA loadings - ", features_list[top_features[0]-1], ', ',features_list[top_features[1]-1], ', ',features_list[top_features[2]-1])
+    features_list = list(scaled_df.columns.values)
+    print("Top 3 features with highest PCA loadings - ", features_list[top_features[0]-1], ', ',features_list[top_features[1]-1], ', ',features_list[top_features[2]-1])
 
     app.run(debug=True)

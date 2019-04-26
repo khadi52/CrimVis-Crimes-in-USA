@@ -1,8 +1,29 @@
 var pieColors = d3.scaleOrdinal(['#fba55f', '#d13c4b', '#4288b5', '#4da3b1', '#65b5aa', '#83cca5', '#a2d9a3', '#bfe5a0', '#d8ef9f', '#ebf7a6', '#f7faaf', '#fdf5ac', '#fee89a', '#fed585', '#fdbf70', '#f78851', '#ef6d4a', '#d13c4b', '#000075', '#808080', '#ef6d4a', '#000000']);
 const pca_view_opt = d3.select(".pca_option");
 const dash_view_opt = d3.select(".dash_option");
+const rape_dropdown = d3.select("#rape_opt");
+const murder_dropdown = d3.select("#murder_opt");
+const robbery_dropdown = d3.select("#robbery_opt");
+const burglary_dropdown = d3.select("#burglary_opt");
+const mvt_dropdown = d3.select("#mvt_opt");
+const larceny_dropdown = d3.select("#lt_opt");
+const property_dropdown = d3.select("#pc_opt");
+const aggravated_assault_dropdwon = d3.select("#aa_opt");
+
 const PCA = "PCA_ANALYSIS";
-const DASHBOARD = "DASHBOARD"
+const DASHBOARD = "DASHBOARD";
+const RAPE = "Rape";
+const  MURDER = "Murder";
+const ROBBERY = "Robbery";
+const BURGLARY = "Burglary";
+const ASSAULT = "Aggravated Assault";
+const MVT = "Motor Vehicle Theft";
+const PROPERTY = "Property Crime";
+const LARCENY = "Larceny-theft";
+
+var is_dashboard_view = true;
+var was_pca_view = true;
+
 const margin = {top: 30, right: 20, bottom: 30, left: 50};
 $.post("", {'data': 'received'}, plot_dashboard);
 var tip = d3.tip()
@@ -11,31 +32,181 @@ var tip = d3.tip()
     .html(function (d) {
         return "<strong>Count:</strong> <span style='color:red'>" + d + "</span>";
     });
-
 function route(view) {
-    if (view == PCA) {
+    if(view == PCA){
         $.post("pca", {'data': 'received'}, plot_pca);
-    } else if (view == DASHBOARD) {
+    }
+    else if (view == DASHBOARD){
         $.post("", {'data': 'received'}, plot_dashboard);
-    } else if (view == "PCA Scatter Stratified Sampled Data") {
-        $.post("pca_scatter", {'data': 'stratified'}, function (data) {
-            plot_scatter_plot(data, "2D Scatter Plot of Projection of Stratified Sampled Data on top 2 PCA Vectors");
+    }
+    else if (view == MURDER) {
+        $.post("crime", {'data': MURDER}, function(data) {
+            plot_dashboard(data,view);
+        });
+    }
+    else if (view == RAPE) {
+        $.post("crime", {'data': RAPE}, function(data) {
+            plot_dashboard(data,view);
+        });
+    }
+    else if (view == ROBBERY) {
+        $.post("crime", {'data': ROBBERY}, function(data) {
+            plot_dashboard(data,view);
+        });
+    }
+    else if (view == BURGLARY) {
+        $.post("crime", {'data': BURGLARY}, function(data) {
+            plot_dashboard(data,view);
+        });
+    }
+    else if (view == ASSAULT) {
+        $.post("crime", {'data': ASSAULT}, function(data) {
+            plot_dashboard(data,view);
+        });
+    }
+    else if (view == MVT) {
+        $.post("crime", {'data': MVT}, function(data) {
+            plot_dashboard(data,view);
+        });
+    }
+    else if (view == PROPERTY) {
+        $.post("crime", {'data': PROPERTY}, function(data) {
+            plot_dashboard(data,view);
+        });
+    }
+    else if (view == LARCENY) {
+        $.post("crime", {'data': LARCENY}, function(data) {
+            plot_dashboard(data,view);
+        });
+    }
+    else if(view == "PCA Scatter Stratified Sampled Data"){
+        $.post("pca_scatter", {'data': 'stratified'}, function(data) {
+            plot_scatter_plot(data,"2D Scatter Plot of Projection of Stratified Sampled Data on top 2 PCA Vectors");
         })
     }
 }
-
-function plot_dashboard(data) {
-    draw_all_crimes(data.chart_data);
-    create_pie(data.area_pie_data);
-    draw_bar_chart(data.crime_bar_data);
-}
-
 function plot_pca(data) {
     plot_scree_plot(data.chart_data);
     // plot_sum_squared_loadings(data.chart_data);
 }
 
+function append_map_svg(){
+    var box_boundary = d3.select("#usmap-box").node().getBoundingClientRect();
+    var width = box_boundary.width - (margin.left) - (margin.right),
+        height = box_boundary.height - (margin.top) - (margin.bottom);
+    var svg = d3.select("#usmap-box").append('div', "usmap")
+        .append("svg")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height +margin.top + margin.bottom)
+        .attr("id", "svg_map");
+}
+
+function append_pie_svg(){
+    var box_boundary = d3.select("#pie1").node().getBoundingClientRect();
+    var width = box_boundary.width - (margin.left) - (margin.right),
+        height = box_boundary.height - (margin.top) - (margin.bottom);
+    var svg = d3.select("#pie1")
+        .append("svg")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height +margin.top + margin.bottom)
+        .attr("id", "svg_pie");
+    var groupedChart = svg.append("g")
+        .attr("transform", "translate(" + ((margin.left) + (margin.right) + width)/2+ "," + ((margin.left) + (margin.right) + height)/2 + ")");
+}
+
+function append_svgs(){
+    append_map_svg();
+    append_pie_svg();
+}
+
+function init_containers(){
+    d3.select(".chart-container").remove();
+    d3.select(".container-fluid")
+        .append("div")
+        .attr("class","chart-container")
+        .append("div")
+        .attr("class","flex-container")
+        .append("div")
+        .attr("class","first-box")
+        .attr("id", "usmap-box");
+    d3.select("#usmap-box")
+        .append("div")
+        .attr("class", "chart-header")
+        .attr("id", "pie1-header")
+        .style("color", "#fff")
+        .style("background-color","#6d7fcc")
+        .text("Crimes Across States")
+        .style("padding", "5px");
+
+    d3.select(".flex-container")
+        .append("div")
+        .attr("class","first-box second-box")
+        .attr("id", "barchart_crime");;
+
+    d3.select(".chart-container")
+        .append("div")
+        .attr("class","flex-container")
+        .attr("id", "second-container")
+        .append("div")
+        .attr("class","first-box")
+        .attr("id", "pie1");
+
+    d3.select("#second-container")
+        .append("div")
+        .attr("class","first-box second-box");
+    d3.select("#pie1")
+        .append("div")
+        .attr("class", "chart-header")
+        .attr("id", "pie1-header")
+        .style("color", "#fff")
+        .style("background-color","#6d7fcc")
+        .text("Crimes Proportion Across Different Areas in State")
+        .style("padding","5px");
+    append_svgs();
+}
+
+function dispatch_pie_update_evt(data,view){
+    if (view == MURDER) {
+        murder_dropdown.dispatch("change",{detail: {myCustomObject:data.area_pie_data}});
+    }
+    else if (view == RAPE) {
+        rape_dropdown.dispatch("change",{detail: {myCustomObject:data.area_pie_data}});
+    }
+    else if (view == ROBBERY) {
+        robbery_dropdown.dispatch("change",{detail: {myCustomObject:data.area_pie_data}});
+    }
+    else if (view == BURGLARY) {
+        burglary_dropdown.dispatch("change",{detail: {myCustomObject:data.area_pie_data}});
+    }
+    else if (view == ASSAULT) {
+        aggravated_assault_dropdwon.dispatch("change",{detail: {myCustomObject:data.area_pie_data}});
+    }
+    else if (view == MVT) {
+        mvt_dropdown.dispatch("change",{detail: {myCustomObject:data.area_pie_data}});
+    }
+    else if (view == PROPERTY) {
+        property_dropdown.dispatch("change",{detail: {myCustomObject:data.area_pie_data}});
+    }
+    else if (view == LARCENY) {
+        larceny_dropdown.dispatch("change",{detail: {myCustomObject:data.area_pie_data}});
+    }
+}
+
+function plot_dashboard(data,view){
+    if (was_pca_view) {
+        init_containers()
+        create_pie(data);
+    }
+    draw_all_crimes(data);
+    if(!was_pca_view)
+        dispatch_pie_update_evt(data,view);
+    was_pca_view = false;
+    draw_bar_chart(data.crime_bar_data);
+
+}
+
 function draw_bar_chart(data) {
+    console.log("drawing bar chart");
     const first_box_boundary = d3.select("#barchart_crime").node().getBoundingClientRect();
     data = JSON.parse(data);
     data.forEach(function (d) {
@@ -135,83 +306,267 @@ function draw_bar_chart(data) {
 
 function create_pie(data) {
     var first_box_boundary = d3.select("#pie1").node().getBoundingClientRect();
-    data = JSON.parse(data);
-    data.forEach(function (d) {
+    data = JSON.parse(data.area_pie_data);
+    data.forEach(function(d) {
         d.area = d['Area'];
         d.total_crime = d['Total Crimes'];
     });
+
     var width = first_box_boundary.width - (margin.left) - (margin.right),
         height = first_box_boundary.height - (margin.top) - (margin.bottom);
 
-    const radius = Math.min(width, height) / 2;
+    const radius = Math.min(width,height)/2;
+    var svg = d3.select("#svg_pie");
+    var groupedChart = svg.select("g");
+    var pie = d3.pie()
+        .value(function (d) {
+            return d.total_crime;
+        });
 
-    var chart_header = d3.select("#pie1")
-        .append("div")
-        .attr("class", "chart-header")
-        .attr("id", "pie1-header")
-        .style("color", "#fff")
-        .style("background-color", "#6d7fcc")
-        .text("Crimes Proportion Across Different Areas in State")
-        .style("padding", "5px");
+    var arc = d3.arc()
+        .outerRadius(radius-1)
+        .innerRadius(0);
 
-    var svg = d3.select("#pie1")
-        .append("svg")
-        .attr("width", width + margin.left + margin.right)
-        .attr("height", height + margin.top + margin.bottom);
+    var label = d3.arc()
+        .outerRadius(radius-10)
+        .innerRadius(radius-40);
 
-    var groupedChart = svg.append("g")
-        .attr("transform", "translate(" + ((margin.left) + (margin.right) + width) / 2 + "," + ((margin.left) + (margin.right) + height) / 2 + ")");
-
-    var pie = d3.pie().value(function (d) {
-        return d.total_crime;
-    });
-
-    var arc = d3.arc().outerRadius(radius - 1).innerRadius(0);
-
-    groupedChart.selectAll("path")
+    var path = groupedChart.selectAll("path")
         .data(pie(data))
         .enter()
         .append("path")
-        .style("stroke", "white")
-        .style("fill", function (d, i) {
-            return pieColors(i);
+        .attr("class","arc")
+        .style("stroke","white")
+        .style("fill",function(d,i){return  pieColors(i);})
+        .attr("d",arc)
+        .each(function(d) { this._current = d; }); // store the initial angles
+    path.on("mouseover", function(d,i) {
+        arc = d3.arc().innerRadius(0).outerRadius(radius+10)
+        d3.select(this).transition().duration(400).attr("d", arc);
+        d3.select("#tooltip").html(pieTooltipHtml(d))
+            .style('color', 'black').style('font-size', '10.5px').style('text-align', 'center')
+            .style('display', 'block').style("left", d3.event.pageX + "px")
+            .style("top", d3.event.pageY + "px").style("opacity", 1);
+    })
+        .on('mousemove', function(d,i) {
+            d3.select("#tooltip").style('left',(d3.event.layerX - 20)+'px').style('top',(d3.event.layerY + 15)+'px');
         })
-        .attr("d", arc)
-        .on("mouseover", function (d, i) {
-            arc = d3.arc().innerRadius(0).outerRadius(radius + 10)
+        .on("mouseout", function() {
+            arc = d3.arc().innerRadius(0).outerRadius(radius)
+            d3.select(this).transition().duration(400).attr("d", arc);
+            d3.select("#tooltip").style('opacity',0).style('display', 'none');
+        });
+    rape_dropdown
+        .on("change", function(d, i){
+            var myParams = d3.event.detail
+            myParams = (myParams.myCustomObject);
+            console.log(typeof myParams)
+            console.log(myParams);
+            myParams = JSON.parse(myParams);
+            myParams.forEach(function(d) {
+                d.area = d['Area'];
+                d.total_crime = d['Total Crimes'];
+            });
+            console.log("Hello");
+            redraw(myParams);
+        });
+    murder_dropdown
+        .on("change", function(d, i){
+            var myParams = d3.event.detail
+            myParams = (myParams.myCustomObject);
+            console.log(typeof myParams)
+            console.log(myParams);
+            myParams = JSON.parse(myParams);
+            myParams.forEach(function(d) {
+                d.area = d['Area'];
+                d.total_crime = d['Total Crimes'];
+            });
+            console.log("Hello");
+            redraw(myParams);
+        });
+    burglary_dropdown
+        .on("change", function(d, i){
+            var myParams = d3.event.detail
+            myParams = (myParams.myCustomObject);
+            console.log(typeof myParams)
+            console.log(myParams);
+            myParams = JSON.parse(myParams);
+            myParams.forEach(function(d) {
+                d.area = d['Area'];
+                d.total_crime = d['Total Crimes'];
+            });
+            console.log("Hello");
+            redraw(myParams);
+        });
+    robbery_dropdown
+        .on("change", function(d, i){
+            var myParams = d3.event.detail
+            myParams = (myParams.myCustomObject);
+            console.log(typeof myParams)
+            console.log(myParams);
+            myParams = JSON.parse(myParams);
+            myParams.forEach(function(d) {
+                d.area = d['Area'];
+                d.total_crime = d['Total Crimes'];
+            });
+            console.log("Hello");
+            redraw(myParams);
+        });
+    larceny_dropdown
+        .on("change", function(d, i){
+            var myParams = d3.event.detail
+            myParams = (myParams.myCustomObject);
+            console.log(typeof myParams)
+            console.log(myParams);
+            myParams = JSON.parse(myParams);
+            myParams.forEach(function(d) {
+                d.area = d['Area'];
+                d.total_crime = d['Total Crimes'];
+            });
+            console.log("Hello");
+            redraw(myParams);
+        });
+    property_dropdown
+        .on("change", function(d, i){
+            var myParams = d3.event.detail
+            myParams = (myParams.myCustomObject);
+            console.log(typeof myParams)
+            console.log(myParams);
+            myParams = JSON.parse(myParams);
+            myParams.forEach(function(d) {
+                d.area = d['Area'];
+                d.total_crime = d['Total Crimes'];
+            });
+            console.log("Hello");
+            redraw(myParams);
+        });
+    mvt_dropdown
+        .on("change", function(d, i){
+            var myParams = d3.event.detail
+            myParams = (myParams.myCustomObject);
+            console.log(typeof myParams)
+            console.log(myParams);
+            myParams = JSON.parse(myParams);
+            myParams.forEach(function(d) {
+                d.area = d['Area'];
+                d.total_crime = d['Total Crimes'];
+            });
+            console.log("Hello");
+            redraw(myParams);
+        });
+    aggravated_assault_dropdwon
+        .on("change", function(d, i){
+            var myParams = d3.event.detail
+            myParams = (myParams.myCustomObject);
+            console.log(typeof myParams)
+            console.log(myParams);
+            myParams = JSON.parse(myParams);
+            myParams.forEach(function(d) {
+                d.area = d['Area'];
+                d.total_crime = d['Total Crimes'];
+            });
+            console.log("Hello");
+            redraw(myParams);
+        });
+    function redraw(data){
+
+        // join
+        var arcs = groupedChart.selectAll(".arc")
+            .data(pie(data), function(d){ return d.data.total_crime; });
+
+        // update
+        arcs
+            .transition()
+            .duration(1500)
+            .attrTween("d", arcTween);
+
+        // enter
+        arcs.enter().append("path")
+            .attr("class", "arc").style("stroke","white")
+            .style("fill",function(d,i){return  pieColors(i);})
+            .attr("d", arc)
+            .each(function(d) { this._current = d; });
+
+        groupedChart.selectAll("path").on("mouseover", function(d,i) {
+            arc = d3.arc().innerRadius(0).outerRadius(radius+10)
             d3.select(this).transition().duration(400).attr("d", arc);
             d3.select("#tooltip").html(pieTooltipHtml(d))
                 .style('color', 'black').style('font-size', '10.5px').style('text-align', 'center')
                 .style('display', 'block').style("left", d3.event.pageX + "px")
                 .style("top", d3.event.pageY + "px").style("opacity", 1);
         })
-        .on('mousemove', function (d, i) {
-            d3.select("#tooltip").style('left', (d3.event.layerX - 20) + 'px').style('top', (d3.event.layerY + 15) + 'px');
-        })
-        .on("mouseout", function () {
-            arc = d3.arc().innerRadius(0).outerRadius(radius)
-            d3.select(this).transition().duration(400).attr("d", arc);
-            d3.select("#tooltip").style('opacity', 0).style('display', 'none');
-        });
+            .on('mousemove', function(d,i) {
+                d3.select("#tooltip").style('left',(d3.event.layerX - 20)+'px').style('top',(d3.event.layerY + 15)+'px');
+            })
+            .on("mouseout", function() {
+                arc = d3.arc().innerRadius(0).outerRadius(radius)
+                d3.select(this).transition().duration(400).attr("d", arc);
+                d3.select("#tooltip").style('opacity',0).style('display', 'none');
+            });
+        var legendG = svg.selectAll(".legend")
+            .data(pie(data))
+            .enter().append("g")
+            .attr("transform", function(d,i){
+                return "translate(" + (width - 110) + "," + (i * 15 + 20) + ")";
+            })
+            .attr("class", "legend");
+
+        legendG.append("rect")
+            .attr("width", 10)
+            .attr("height", 10)
+            .attr("fill", function(d, i) {
+                return pieColors(i);
+            });
+
+        legendG.append("text")
+            .text(function(d){
+                var y = "";
+                if (d.data.area === "NMC")
+                    y =  "Non Metropolitan County";
+                else if (d.data.area === "MSA")
+                    y = "Metropolitan Statistical Area";
+                else
+                    y = "Cities Outside Metropolitan Area";
+                return y;
+            })
+            .style("font-size", 10)
+            .attr("y", 10)
+            .attr("x", 11);
+
+    }
+
+    // Store the displayed angles in _current.
+    // Then, interpolate from _current to the new angles.
+    // During the transition, _current is updated in-place by d3.interpolate.
+    function arcTween(a) {
+        console.log(this._current);
+        var i = d3.interpolate(this._current, a);
+        this._current = i(0);
+        return function(t) {
+            return arc(i(t));
+        };
+    }
+
     var legendG = svg.selectAll(".legend")
         .data(pie(data))
         .enter().append("g")
-        .attr("transform", function (d, i) {
+        .attr("transform", function(d,i){
             return "translate(" + (width - 110) + "," + (i * 15 + 20) + ")";
         })
         .attr("class", "legend");
+
     legendG.append("rect")
         .attr("width", 10)
         .attr("height", 10)
-        .attr("fill", function (d, i) {
+        .attr("fill", function(d, i) {
             return pieColors(i);
         });
 
     legendG.append("text")
-        .text(function (d) {
+        .text(function(d){
             var y = "";
             if (d.data.area === "NMC")
-                y = "Non Metropolitan County";
+                y =  "Non Metropolitan County";
             else if (d.data.area === "MSA")
                 y = "Metropolitan Statistical Area";
             else
@@ -221,10 +576,10 @@ function create_pie(data) {
         .style("font-size", 10)
         .attr("y", 10)
         .attr("x", 11);
-
 }
 
-function tooltipHtml(d, data) {   /* function to create html content string in tooltip div. */
+
+function tooltipHtml(d, data){   /* function to create html content string in tooltip div. */
     //d is the id of the state.. get the row which has this id
     var tuple = [];
     data.forEach(function (row) {
@@ -240,73 +595,32 @@ function tooltipHtml(d, data) {   /* function to create html content string in t
         "</table>";
 }
 
-function pieTooltipHtml(d) {   /* function to create html content string in tooltip div. */
+function pieTooltipHtml(d){   /* function to create html content string in tooltip div. */
     //d is the id of the state.. get the row which has this id
     var x = Math.floor(((+d.data.total_crime)));
     var y = "";
     if (d.data.area === "NMC")
-        y = "Non Metropolitan County";
+        y =  "Non Metropolitan County";
     else if (d.data.area === "MSA")
         y = "Metropolitan Statistical Area";
     else
         y = "Cities Outside Metropolitan Area";
-    return y + " - " + x;
-    return "<h4>" + x + " - " + "</h4>";
+    return y+" - "+x;
+    return "<h4>"+x+" - "+ "</h4>";
 }
-
 function draw_all_crimes(data) {
-    d3.select(".chart-container").remove();
-    d3.select(".container-fluid")
-        .append("div")
-        .attr("class", "chart-container")
-        .append("div")
-        .attr("class", "flex-container")
-        .append("div")
-        .attr("class", "first-box")
-        .attr("id", "usmap-box");
-    var chart_header = d3.select("#usmap-box")
-        .append("div")
-        .attr("class", "chart-header")
-        .attr("id", "pie1-header")
-        .style("color", "#fff")
-        .style("background-color", "#6d7fcc")
-        .text("Crimes Across States")
-    //.style("padding", "5px");
-
-    d3.select(".flex-container")
-        .append("div")
-        .attr("class", "first-box second-box")
-        .attr("id", "barchart_crime");
-
-    d3.select(".chart-container")
-        .append("div")
-        .attr("class", "flex-container")
-        .attr("id", "second-container")
-        .append("div")
-        .attr("class", "first-box")
-        .attr("id", "pie1");
-
-    d3.select("#second-container")
-        .append("div")
-        .attr("class", "first-box second-box");
-
+    data = JSON.parse(data.chart_data);
     var first_box_boundary = d3.select("#usmap-box").node().getBoundingClientRect();
-
     var width = first_box_boundary.width - (margin.left) - (margin.right),
         height = first_box_boundary.height - (margin.top) - (margin.bottom);
 
-    data = JSON.parse(data);
-    d3.json("https://d3js.org/us-10m.v1.json", function (error, unitedStates) {
+    d3.json("https://d3js.org/us-10m.v1.json", function(error, unitedStates) {
         if (error) throw error;
-        const us_map = topojson.feature(unitedStates, unitedStates.objects.states);
+        var us_map = topojson.feature(unitedStates, unitedStates.objects.states);
 
-        var svg = d3.select("#usmap-box").append('div', "usmap")
-            .append("svg")
-            .attr("width", width + margin.left + margin.right)
-            .attr("height", height + margin.top + margin.bottom);
-
+        var svg = d3.select("#svg_map");
         var projection = d3.geoIdentity()
-            .fitExtent([[margin.left, margin.right], [width, height]], us_map);
+            .fitExtent([[margin.left,margin.right],[width,height]], us_map);
 
         var path = d3.geoPath().projection(projection);
 
@@ -314,6 +628,7 @@ function draw_all_crimes(data) {
             d["Total Crimes"] = +d["Total Crimes"];
             d["Violent Crime"] = +d["Violent Crime"];
         });
+
         var pathSvg = svg.append("g")
             .attr("class", "states")
             .selectAll("path")
@@ -322,23 +637,21 @@ function draw_all_crimes(data) {
             .append("path")
             .style("fill", "#6d7fcc")
             .attr("d", path)
-            .on("mouseover", function (d, i) {
-                d3.select(this).style("fill", "red");
-                d3.select("#tooltip").html(tooltipHtml(d, data))
+            .on("mouseover", function(d,i) {
+                d3.select(this).style("fill","red");
+                d3.select("#tooltip").html(tooltipHtml(d,data))
                     .style('color', 'black').style('font-size', '10.5px').style('text-align', 'center')
                     .style('display', 'block').style("left", d3.event.pageX + "px")
                     .style("top", d3.event.pageY + "px").style("opacity", 1);
             })
-            .on('mousemove', function (d, i) {
-                d3.select("#tooltip").style('left', (d3.event.layerX - 20) + 'px').style('top', (d3.event.layerY + 15) + 'px');
+            .on('mousemove', function(d,i) {
+                d3.select("#tooltip").style('left',(d3.event.layerX - 20)+'px').style('top',(d3.event.layerY + 15)+'px');
             })
-            .on("mouseout", function () {
-                d3.select(this).style("fill", "#6d7fcc").transition().duration(400);
-                d3.select("#tooltip").style('opacity', 0).style('display', 'none');
+            .on("mouseout", function() {
+                d3.select(this).style("fill","#6d7fcc").transition().duration(400);
+                d3.select("#tooltip").style('opacity',0).style('display', 'none');
             })
-            .style("fill", function (d) {
-                return {color: d3.interpolateRgb("#ffffcc", "#800026")(d["Total Crimes"] / 10000)}
-            });
+            .style("fill", function(d){ return {color:d3.interpolateRgb("#ffffcc", "#800026")(d["Total Crimes"]/10000)}});
         svg.append("path").attr("class", "state-borders")
             .attr("d", path(topojson.mesh(unitedStates, unitedStates.objects.states, function (a, b) {
                 return a !== b;
@@ -347,29 +660,33 @@ function draw_all_crimes(data) {
 }
 
 //plots scree plot
-function plot_scree_plot(data) {
+function  plot_scree_plot(data) {
     data = JSON.parse(data);
     console.log(data);
-    data.forEach(function (d) {
+    data.forEach(function(d) {
         d.eigen_values = d.eigen_values;
         d.pca_component = d.pca_component;
         d.sum_sqaured_loadings = d.sum_sqaured_loadings;
         d.features_name = d.features_name;
     });
+
     d3.select(".chart-container").remove();
+
     // Set the dimensions of the canvas / graph
+
     var markIDX = 0;
     var markIDY = 0;
+
     d3.select(".container-fluid")
         .append("div")
-        .attr("class", "chart-container")
+        .attr("class","chart-container")
         .append("div")
-        .attr("class", "flex-container1")
+        .attr("class","flex-container1")
         .append("div")
-        .attr("class", "first-box")
+        .attr("class","first-box")
         .attr("id", "scree_plot");
 
-    var chart_header = d3.select("#scree_plot")
+    d3.select("#scree_plot")
         .append("div")
         .attr("class", "chart-header")
         .attr("id", "pie1-header")
@@ -380,14 +697,14 @@ function plot_scree_plot(data) {
 
     d3.select(".flex-container1")
         .append("div")
-        .attr("class", "first-box second-box")
-        .attr("id", "sum_squared_loadings")
+        .attr("class","first-box second-box")
+        .attr("id", "sum_squared_loadings");
 
     var first_box_boundary = d3.select("#scree_plot").node().getBoundingClientRect();
     console.log(first_box_boundary.height);
 
-    var width = first_box_boundary.width - (2 * margin.left) - (2 * margin.right),
-        height = first_box_boundary.height - (2 * margin.top) - (2 * margin.bottom);
+    var width = first_box_boundary.width - (2*margin.left) - (2*margin.right),
+        height = first_box_boundary.height - (2*margin.top) - (2*margin.bottom);
 
     // Set the ranges
     var x = d3.scaleBand().range([0, width]).padding(0.5);
@@ -399,43 +716,44 @@ function plot_scree_plot(data) {
 
     // Define the line
     var value_line = d3.line()
-        .x(function (d, i) {
+        .x(function(d,i) {
             if (i == 2) {
                 markIDX = x(d.pca_component) + x.bandwidth() / 2;
                 markIDY = y(d.eigen_values)
             }
             return x(d.pca_component) + x.bandwidth() / 2;
         })
-        .y(function (d) {
-            return y(d.eigen_values);
-        });
+        .y(function(d) { return y(d.eigen_values); });
+
+
+    // Scale the range of the data
     x.domain(data.map(d => d.pca_component));
-    y.domain([0, d3.max(data, function (d) {
-        return d.eigen_values;
-    })]);
+    y.domain([0, d3.max(data, function(d) {
+        return d.eigen_values;  })]);
 
     var svg_scree = d3.select(".first-box")
         .append("div")
-        .attr("id", "chart_scree")
-        .attr("class", "scree-container")
+        .attr("id","chart_scree")
+        .attr("class","scree-container")
         .append("svg")
         .attr("width", width + margin.left + margin.right)
-        .attr("height", height + 1.5 * margin.top + 1.5 * margin.bottom)
+        .attr("height", height + 1.5*margin.top + 1.5*margin.bottom)
         .append("g")
         .attr("transform",
-            "translate(" + (2*margin.left) + "," + (1.5*margin.top) + ")");
+            "translate(" + 2*margin.left + "," + 1.5*margin.top + ")");
 
     svg_scree.append("g")
         .attr("class", "xaxes")
         .attr("transform", "translate(0," + height + ")")
         .call(xAxis)
         .append("text")
+        .attr("class", "xaxisl")
         .attr("text-anchor", "middle")
         .attr("y", margin.left)
         .attr("x", (width / 2))
         .attr("dy", "1em")
-        .text("PCA Components");
-    ;
+        .text("PCA Components");;
+
     // Add the Y Axis
     svg_scree.append("g")
         .attr("class", "yaxes")
@@ -444,10 +762,9 @@ function plot_scree_plot(data) {
         .attr("fill", "#000")
         .attr("transform", "rotate(-90)")
         .attr("y", 0 - margin.left)
-        .attr("x", 0 - (height / 2))
+        .attr("x",0 - (height / 2))
         .attr("dy", "1em")
         .text("Eigen Values");
-
     svg_scree.selectAll(".bar")
         .data(data)
         .enter().append("rect")
@@ -469,8 +786,9 @@ function plot_scree_plot(data) {
         .attr("class", "line")
         .attr("d", value_line(data));
 
+
     svg_scree.append("circle")
-        .attr("class", "marker")
+        .attr("class","marker")
         .attr("r", 9)
         .attr("cx", markIDX)
         .attr("cy", markIDY)
@@ -481,15 +799,10 @@ function plot_scree_plot(data) {
         .enter().append("circle")
         .attr("class", "point")
         .attr("r", 3)
-        .attr("cx", function (d, i) {
-            return x(d.pca_component) + x.bandwidth() / 2;
+        .attr("cx", function(d, i) {             return x(d.pca_component) + x.bandwidth() / 2;
         })
-        .attr("cy", function (d) {
-            return y(d.eigen_values)
-        });
-
+        .attr("cy", function(d) { return y(d.eigen_values) });
 }
-
 function plot_sum_squared_loadings(data) {
     const first_box_boundary = d3.select("#sum_squared_loadings").node().getBoundingClientRect();
     data = JSON.parse(data);
@@ -592,15 +905,58 @@ function plot_sum_squared_loadings(data) {
         });
 }
 
-pca_view_opt.on('click', function () {
+
+pca_view_opt.on('click', function(){
+    is_dashboard_view = false;
+    was_pca_view = true;
     var event = d3.event;
     console.log("In PCA view");
     event.preventDefault();
     route(PCA);
 });
-dash_view_opt.on('click', function () {
+dash_view_opt.on('click', function(){
     var event = d3.event;
-    console.log("In Dashboard view");
+    is_dashboard_view = true;
     event.preventDefault();
     route(DASHBOARD);
+});
+rape_dropdown.on('click', function(){
+    var event = d3.event;
+    event.preventDefault();
+    route(RAPE);
+});
+murder_dropdown.on('click', function(){
+    var event = d3.event;
+    event.preventDefault();
+    route(MURDER);
+});
+burglary_dropdown.on('click', function(){
+    var event = d3.event;
+    event.preventDefault();
+    route(BURGLARY);
+});
+robbery_dropdown.on('click', function(){
+    var event = d3.event;
+    event.preventDefault();
+    route(ROBBERY);
+});
+mvt_dropdown.on('click', function(){
+    var event = d3.event;
+    event.preventDefault();
+    route(MVT);
+});
+larceny_dropdown.on('click', function(){
+    var event = d3.event;
+    event.preventDefault();
+    route(LARCENY);
+});
+property_dropdown.on('click', function(){
+    var event = d3.event;
+    event.preventDefault();
+    route(PROPERTY);
+});
+aggravated_assault_dropdwon.on('click', function(){
+    var event = d3.event;
+    event.preventDefault();
+    route(ASSAULT);
 });
