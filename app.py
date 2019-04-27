@@ -24,10 +24,13 @@ def index():
              chart_data = us_map_df.to_dict(orient='records')
              area_pie_data = area_pie_df.to_dict(orient='records')
              crime_bar_data = crime_barchart_df.to_dict(orient='records')
+             victim_trend_data = victim_trend_df.to_dict(orient='records')
              chart_data = json.dumps(chart_data, indent=2)
              area_pie_data = json.dumps(area_pie_data, indent=2)
              crime_bar_data = json.dumps(crime_bar_data, indent=2)
-             data = {'chart_data': chart_data,'area_pie_data':area_pie_data, 'crime_bar_data':crime_bar_data}
+             victim_trend_data = json.dumps(victim_trend_data, indent=2)
+             print(victim_trend_data)
+             data = {'chart_data': chart_data,'area_pie_data':area_pie_data, 'crime_bar_data':crime_bar_data, 'victim_trend_data': victim_trend_data}
              return jsonify(data)
     return render_template("index.html")
 
@@ -151,17 +154,17 @@ def print_table_loadings(loading,sum_sqaured_loading):
     result_list = result.tolist()
     result_list = sorted(result_list, key=lambda l: l[5], reverse=True)
 
-    print('Table to show sum of squared loadings\n')
-    for row in result_list:
-        print(' '.join([str(elem) for elem in row]))
+    # print('Table to show sum of squared loadings\n')
+    # for row in result_list:
+    #     print(' '.join([str(elem) for elem in row]))
     return [int(i[0]) for i in result_list]
 
 if __name__ == "__main__":
-    global us_map_df, scaled_df, df_pca, area_pie_df
     global ROBBERY_CRIME
     ROBBERY_CRIME = 'Robbery'
-    global us_map_df, scaled_df, df_pca, area_pie_df, crime_barchart_df
+    global us_map_df, scaled_df, df_pca, area_pie_df, crime_barchart_df, victim_trend_df
     orig_data = pd.read_csv('data/crime-dataset.csv')
+    victim_trend_df = pd.read_csv('data/majid.csv')
     df_pca = orig_data.copy(deep=True)
 
     us_map_df = orig_data.groupby(['id', 'State'])["Total Crimes", "Violent Crime"].apply(
@@ -171,6 +174,8 @@ if __name__ == "__main__":
     crime_barchart_df = orig_data.groupby(['Year'])["Total Crimes"].apply(
         lambda x: x.astype(int).sum()).reset_index()
     crime_barchart_df.Year = crime_barchart_df.Year.astype(str)
+    victim_trend_df.Year = victim_trend_df.Year.astype(str)
+    print(victim_trend_df)
     clean_dataset()
     #dataframe to store normalized data
     scaled_df = pd.DataFrame()

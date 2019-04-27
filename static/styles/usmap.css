@@ -1,11 +1,13 @@
-.state{
+.state {
     fill: none;
     stroke: #2573ff;
     stroke-width: 1;
 }
-.states{
+
+.states {
     fill: #6d7fcc;
 }
+
 .state-borders {
     fill: none;
     stroke: #fff;
@@ -14,6 +16,7 @@
     stroke-linecap: round;
     pointer-events: none;
 }
+
 #tooltip {
     position: absolute;
     text-align: center;
@@ -25,35 +28,62 @@
     border-radius: 2px;
     pointer-events: none;
 }
-#tooltip h4{
-    margin:0;
-    font-size:14px;
+
+#tooltip h4 {
+    margin: 0;
+    font-size: 14px;
 }
-#tooltip{
+
+#tooltip {
     background: rgba(255, 255, 255, 0.9);
-    border:1px solid grey;
-    border-radius:5px;
-    font-size:12px;
-    width:auto;
-    padding:4px;
-    color:white;
-    opacity:0;
+    border: 1px solid grey;
+    border-radius: 5px;
+    font-size: 12px;
+    width: auto;
+    padding: 4px;
+    color: white;
+    opacity: 0;
 }
-#tooltip table{
-    table-layout:fixed;
+
+#tooltip table {
+    table-layout: fixed;
 }
-#tooltip tr td{
-    padding:0;
-    margin:0;
+
+#tooltip tr td {
+    padding: 0;
+    margin: 0;
 }
-#tooltip tr td:nth-child(1){
-    width:50px;
+
+#tooltip tr td:nth-child(1) {
+    width: 50px;
 }
-#tooltip tr td:nth-child(2){
-    text-align:center;
+
+#tooltip tr td:nth-child(2) {
+    text-align: center;
 }
+
 .line {
     fill: none;
-    stroke: rgb(109, 127, 204);
+    /*stroke: rgb(109, 127, 204);*/
     stroke-width: 2;
 }
+
+svg {
+    font: 10px sans-serif;
+    /*shape-rendering: crispEdges;*/
+}
+
+.axis path,
+.axis line {
+    /*fill: none;*/
+    stroke: #000;
+}
+
+path.domain {
+    /*stroke: none;*/
+}
+
+/*
+.y .tick line {
+    stroke: #ddd;
+}*/
