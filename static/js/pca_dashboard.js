@@ -2,6 +2,7 @@ function plot_pca(data) {
     plot_scree_plot(data.chart_data);
     // plot_sum_squared_loadings(data.chart_data);
 }
+
 //plots scree plot
 function plot_scree_plot(data) {
     data = JSON.parse(data);
@@ -79,7 +80,7 @@ function plot_scree_plot(data) {
         .attr("height", height + 1.5 * margin.top + 1.5 * margin.bottom)
         .append("g")
         .attr("transform",
-            "translate(" + (2*margin.left) + "," + (1.5*margin.top) + ")");
+            "translate(" + (2 * margin.left) + "," + (1.5 * margin.top) + ")");
 
     svg_scree.append("g")
         .attr("class", "xaxes")
