@@ -164,7 +164,7 @@ if __name__ == "__main__":
     ROBBERY_CRIME = 'Robbery'
     global us_map_df, scaled_df, df_pca, area_pie_df, crime_barchart_df, victim_trend_df
     orig_data = pd.read_csv('data/crime-dataset.csv')
-    victim_trend_df = pd.read_csv('data/majid.csv')
+    victim_trend_df = pd.read_csv('data/victim_trend.csv')
     df_pca = orig_data.copy(deep=True)
 
     us_map_df = orig_data.groupby(['id', 'State'])["Total Crimes", "Violent Crime"].apply(
