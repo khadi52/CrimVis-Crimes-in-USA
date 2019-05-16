@@ -28,9 +28,12 @@ def index():
              chart_data = json.dumps(chart_data, indent=2)
              area_pie_data = json.dumps(area_pie_data, indent=2)
              crime_bar_data = json.dumps(crime_bar_data, indent=2)
+             age_agg = arrest_age_df[['Under 10', '10-18', '19-35','36-50', '51-65', 'Above 65']].sum(axis=0)
+             age_df = pd.DataFrame({'Age':age_agg.index, 'Count':age_agg.values})
+             age_data = age_df.to_dict(orient='records')
+             age_data = json.dumps(age_data, indent=2)
              victim_trend_data = json.dumps(victim_trend_data, indent=2)
-             print(victim_trend_data)
-             data = {'chart_data': chart_data,'area_pie_data':area_pie_data, 'crime_bar_data':crime_bar_data, 'victim_trend_data': victim_trend_data}
+             data = {'chart_data': chart_data,'area_pie_data':area_pie_data, 'crime_bar_data':crime_bar_data, 'victim_trend_data': victim_trend_data, 'crime_by_age':age_data}
              return jsonify(data)
     return render_template("index.html")
 
@@ -45,13 +48,90 @@ def crime_granular():
         crime_bar_chart = orig_data.groupby(['Year'])[request.form['data']].apply(
                 lambda x: x.astype(int).sum()).reset_index()
         crime_bar_chart.rename(columns={request.form['data']:'Total Crimes'}, inplace=True)
+        age_chart = arrest_age_df[arrest_age_df['Crime'] == request.form['data']]
+
+        age_agg = age_chart[['Under 10', '10-18', '19-35','36-50', '51-65', 'Above 65']].sum(axis=0)
+        age_df = pd.DataFrame({'Age':age_agg.index, 'Count':age_agg.values})
+
         chart_data = crime_usa_map.to_dict(orient='records')
         crime_area_pie = crime_area_pie.to_dict(orient='records')
         crime_bar_chart = crime_bar_chart.to_dict(orient='records')
+        age_data = age_df.to_dict(orient='records')
+        age_data = json.dumps(age_data, indent=2)
         chart_data = json.dumps(chart_data, indent=2)
         crime_area_pie = json.dumps(crime_area_pie, indent=2)
         crime_bar_chart = json.dumps(crime_bar_chart, indent=2)
-        data = {'chart_data': chart_data,'area_pie_data':crime_area_pie,'crime_bar_data':crime_bar_chart}
+        data = {'chart_data': chart_data,'area_pie_data':crime_area_pie,'crime_bar_data':crime_bar_chart, 'crime_by_age':age_data}
+        return jsonify(data)
+
+@app.route("/year", methods = ['POST'])
+def year_granular():
+    #return the original cleaned dataframe to plot the dashboard
+        selected_years = request.form.getlist('years[]', type=int)
+        copy_df = orig_data.copy(deep=True)
+        age_copy_df = arrest_age_df.copy(deep=True)
+
+        if len(selected_years) != 0:
+            copy_df = copy_df[copy_df['Year'].isin(selected_years)] 
+            age_copy_df = age_copy_df[age_copy_df['Year'].isin(selected_years)]
+
+
+        us_map_year = copy_df.groupby(['id', 'State'])["Total Crimes", "Violent Crime"].apply(
+            lambda x: x.astype(int).sum()).reset_index()
+        area_pie_year = copy_df.groupby(['Area'])["Total Crimes"].apply(
+            lambda x: x.astype(int).sum()).reset_index()
+        print(area_pie_year)
+        crime_barchart_year = orig_data.groupby(['Year'])["Total Crimes"].apply(
+            lambda x: x.astype(int).sum()).reset_index() 
+
+        chart_data = us_map_year.to_dict(orient='records')
+        area_pie_data = area_pie_year.to_dict(orient='records')
+        crime_bar_data = crime_barchart_year.to_dict(orient='records')
+        chart_data = json.dumps(chart_data, indent=2)
+        area_pie_data = json.dumps(area_pie_data, indent=2)
+        crime_bar_data = json.dumps(crime_bar_data, indent=2)
+        age_agg = age_copy_df[['Under 10', '10-18', '19-35','36-50', '51-65', 'Above 65']].sum(axis=0)
+        age_df = pd.DataFrame({'Age':age_agg.index, 'Count':age_agg.values})
+        age_data = age_df.to_dict(orient='records')
+        age_data = json.dumps(age_data, indent=2)
+        data = {'chart_data': chart_data,'area_pie_data':area_pie_data, 'crime_bar_data':crime_bar_data, 'crime_by_age':age_data}
+        return jsonify(data)
+
+@app.route("/year_crime", methods = ['POST'])
+def year_crime_granular():
+    #return the original cleaned dataframe to plot the dashboard
+        selected_years = request.form.getlist('years[]', type=int)
+        crime = request.form['crime']
+        copy_df = orig_data.copy(deep=True)
+        age_copy_df = arrest_age_df.copy(deep=True)
+
+        if len(selected_years) != 0:
+            copy_df = copy_df[copy_df['Year'].isin(selected_years)]
+            age_copy_df = age_copy_df[age_copy_df['Year'].isin(selected_years)]
+
+
+        crime_usa_map = copy_df.groupby(['id', 'State'])[crime].apply(
+            lambda x: x.astype(int).sum()).reset_index()
+        crime_area_pie = copy_df.groupby(['Area'])[crime].apply(
+            lambda x: x.astype(int).sum()).reset_index()
+        crime_area_pie.rename(columns={crime:'Total Crimes'}, inplace=True)
+        crime_bar_chart = orig_data.groupby(['Year'])[crime].apply(
+                lambda x: x.astype(int).sum()).reset_index()
+        crime_bar_chart.rename(columns={crime:'Total Crimes'}, inplace=True)
+        age_chart = age_copy_df[age_copy_df['Crime'] == crime]
+
+        age_agg = age_chart[['Under 10', '10-18', '19-35','36-50', '51-65', 'Above 65']].sum(axis=0)
+        age_df = pd.DataFrame({'Age':age_agg.index, 'Count':age_agg.values})
+
+        chart_data = crime_usa_map.to_dict(orient='records')
+        crime_area_pie = crime_area_pie.to_dict(orient='records')
+        crime_bar_chart = crime_bar_chart.to_dict(orient='records')
+        age_data = age_df.to_dict(orient='records')
+        age_data = json.dumps(age_data, indent=2)
+        chart_data = json.dumps(chart_data, indent=2)
+        crime_area_pie = json.dumps(crime_area_pie, indent=2)
+        crime_bar_chart = json.dumps(crime_bar_chart, indent=2)
+        data = {'chart_data': chart_data,'area_pie_data':crime_area_pie,'crime_bar_data':crime_bar_chart, 'crime_by_age':age_data}
         return jsonify(data)
 
 #Task 3 Part 1 - Plots the 2D scatter plot for all 3 dataset of top 2 PCA vectors
@@ -117,9 +197,11 @@ def clean_dataset():
     df_pca.drop('State', axis = 1, inplace=True)
     df_pca.drop('Area', axis = 1, inplace=True)
     df_pca.drop('code', axis = 1, inplace=True)
+    df_pca.drop('id', axis = 1, inplace=True)
+
     df_pca.drop('Year', axis = 1, inplace=True)
-    df_pca.drop('State Population', axis = 1, inplace=True)
-    df_pca.drop('Area Population', axis = 1, inplace=True)
+    #df_pca.drop('State Population', axis = 1, inplace=True)
+    #df_pca.drop('Area Population', axis = 1, inplace=True)
     df_pca.drop('Total Crimes', axis = 1, inplace=True)
     df_pca.drop('Violent Crime', axis = 1, inplace=True)
 
@@ -162,8 +244,18 @@ def print_table_loadings(loading,sum_sqaured_loading):
 if __name__ == "__main__":
     global ROBBERY_CRIME
     ROBBERY_CRIME = 'Robbery'
-    global us_map_df, scaled_df, df_pca, area_pie_df, crime_barchart_df, victim_trend_df
+    global us_map_df, scaled_df, df_pca, area_pie_df, crime_barchart_df, victim_trend_df, arrest_age_df
     orig_data = pd.read_csv('data/crime-dataset.csv')
+    arrest_age_df = pd.read_csv('data/criminal-by-age.csv')
+    arrest_age_df.rename(columns={'Under 10':'Under 10',
+                          '10 to 18':'10-18',
+                          '19 to 35':'19-35',
+                           '36 - 50':'36-50',
+                 '51 to 65':'51-65',
+                 'Above 66':'Above 65'}, 
+                 inplace=True)
+
+    print(arrest_age_df)
     victim_trend_df = pd.read_csv('data/victim_trend.csv')
     df_pca = orig_data.copy(deep=True)
 
@@ -183,6 +275,7 @@ if __name__ == "__main__":
     get_scaled_data()
 
     variance, loading  = get_pca_parameters(scaled_df)
+    print(variance)
     #Finding Sum of Squared Loadings to get the 3 attributes with highest PCA loadings for stratified sampled data
     sum_sqaured_loading = get_sqaured_sum_loadings(loading,len(loading))
     print(sum_sqaured_loading)
