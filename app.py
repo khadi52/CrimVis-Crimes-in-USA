@@ -148,38 +148,47 @@ def year_crime_map_granular():
     #return the original cleaned dataframe to plot the dashboard
         selected_years = request.form.getlist('years[]', type=int)
         selected_states = request.form.getlist('states[]', type=int)
+        selected_areas = request.form.getlist('areas[]')
+
         crime = request.form['crime']
         print(crime)
         copy_df = orig_data.copy(deep=True)
         crime_bar_copy_df = orig_data.copy(deep=True)
         age_copy_df = arrest_age_df.copy(deep=True)
+        pie_copy_df = orig_data.copy(deep=True)
 
         if len(selected_years) != 0:
             copy_df = copy_df[copy_df['Year'].isin(selected_years)]
             age_copy_df = age_copy_df[age_copy_df['Year'].isin(selected_years)]
+            pie_copy_df = pie_copy_df[pie_copy_df['Year'].isin(selected_years)]
+
+        if len(selected_areas) !=0:
+            copy_df = copy_df[copy_df['Area'].isin(selected_areas)]
+            crime_bar_copy_df = crime_bar_copy_df[crime_bar_copy_df['Area'].isin(selected_areas)]
+
 
         if crime in ("" , "Crime Category", "success"):
             crime_usa_map = copy_df.groupby(['id', 'State'])["Total Crimes", "Violent Crime"].apply(
                 lambda x: x.astype(int).sum()).reset_index()
         else:
-            print("hELLO")
             crime_usa_map = copy_df.groupby(['id', 'State'])[crime].apply(
             lambda x: x.astype(int).sum()).reset_index()
 
         if len(selected_states) != 0:
             copy_df = copy_df[copy_df['id'].isin(selected_states)]
             crime_bar_copy_df = crime_bar_copy_df[crime_bar_copy_df['id'].isin(selected_states)]
+            pie_copy_df = pie_copy_df[pie_copy_df['id'].isin(selected_states)]
 
         print(copy_df)
-
+  
         if crime in ("" , "Crime Category", "success"):
-            crime_area_pie = copy_df.groupby(['Area'])["Total Crimes"].apply(
+            crime_area_pie = pie_copy_df.groupby(['Area'])["Total Crimes"].apply(
                 lambda x: x.astype(int).sum()).reset_index()
             crime_bar_chart = crime_bar_copy_df.groupby(['Year'])["Total Crimes"].apply(
                 lambda x: x.astype(int).sum()).reset_index()
         else:
-            crime_area_pie = copy_df.groupby(['Area'])[crime].apply(
-            lambda x: x.astype(int).sum()).reset_index()
+            crime_area_pie = pie_copy_df.groupby(['Area'])[crime].apply(
+                lambda x: x.astype(int).sum()).reset_index()
             crime_area_pie.rename(columns={crime:'Total Crimes'}, inplace=True)
             crime_bar_chart = crime_bar_copy_df.groupby(['Year'])[crime].apply(
                 lambda x: x.astype(int).sum()).reset_index()
