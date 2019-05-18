@@ -182,12 +182,12 @@ def year_crime_map_granular():
         print(copy_df)
   
         if crime in ("" , "Crime Category", "success"):
-            crime_area_pie = pie_copy_df.groupby(['Area'])["Total Crimes"].apply(
+            crime_area_pie = pie_copy_df.groupby(['Area'])["Total Crimes","Area Population"].apply(
                 lambda x: x.astype(int).sum()).reset_index()
             crime_bar_chart = crime_bar_copy_df.groupby(['Year'])["Total Crimes"].apply(
                 lambda x: x.astype(int).sum()).reset_index()
         else:
-            crime_area_pie = pie_copy_df.groupby(['Area'])[crime].apply(
+            crime_area_pie = pie_copy_df.groupby(['Area'])[crime,"Area Population"].apply(
                 lambda x: x.astype(int).sum()).reset_index()
             crime_area_pie.rename(columns={crime:'Total Crimes'}, inplace=True)
             crime_bar_chart = crime_bar_copy_df.groupby(['Year'])[crime].apply(
@@ -321,7 +321,7 @@ if __name__ == "__main__":
     global ROBBERY_CRIME
     ROBBERY_CRIME = 'Robbery'
     global us_map_df, scaled_df, df_pca, area_pie_df, crime_barchart_df, victim_trend_df, arrest_age_df
-    orig_data = pd.read_csv('data/crime-dataset.csv')
+    orig_data = pd.read_csv('data/crime-dataset-final.csv')
     arrest_age_df = pd.read_csv('data/criminal-by-age.csv')
     arrest_age_df.rename(columns={'Under 10':'Under 10',
                           '10 to 18':'10-18',
@@ -331,19 +331,18 @@ if __name__ == "__main__":
                  'Above 66':'Above 65'}, 
                  inplace=True)
 
-    print(arrest_age_df)
     victim_trend_df = pd.read_csv('data/victim_trend.csv')
     df_pca = orig_data.copy(deep=True)
 
     us_map_df = orig_data.groupby(['id', 'State'])["Total Crimes", "Violent Crime"].apply(
         lambda x: x.astype(int).sum()).reset_index()
-    area_pie_df = orig_data.groupby(['Area'])["Total Crimes"].apply(
+    area_pie_df = orig_data.groupby(['Area'])["Total Crimes", "Area Population"].apply(
         lambda x: x.astype(int).sum()).reset_index()
+    print(area_pie_df);
     crime_barchart_df = orig_data.groupby(['Year'])["Total Crimes"].apply(
         lambda x: x.astype(int).sum()).reset_index()
     crime_barchart_df.Year = crime_barchart_df.Year.astype(str)
     victim_trend_df.Year = victim_trend_df.Year.astype(str)
-    print(victim_trend_df)
     clean_dataset()
     #dataframe to store normalized data
     scaled_df = pd.DataFrame()
@@ -351,10 +350,8 @@ if __name__ == "__main__":
     get_scaled_data()
 
     variance, loading  = get_pca_parameters(scaled_df)
-    print(variance)
     #Finding Sum of Squared Loadings to get the 3 attributes with highest PCA loadings for stratified sampled data
     sum_sqaured_loading = get_sqaured_sum_loadings(loading,len(loading))
-    print(sum_sqaured_loading)
     #printing table of top attributes with highest loadings
     top_features = print_table_loadings(loading,sum_sqaured_loading)
 

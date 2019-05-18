@@ -1,16 +1,14 @@
 .state {
     fill: none;
-    stroke: #2573ff;
-    stroke-width: 1;
+    stroke-width: 0.5px;
 }
 
 .states {
-    fill: #6d7fcc;
 }
 
 .state-borders {
     fill: none;
-    stroke: #fff;
+    stroke: white;
     stroke-width: 0.5px;
     stroke-linejoin: round;
     stroke-linecap: round;
@@ -82,7 +80,6 @@ svg {
 path.domain {
     /*stroke: none;*/
 }
-
 /*
 .y .tick line {
     stroke: #ddd;

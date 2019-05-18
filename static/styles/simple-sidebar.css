@@ -12,7 +12,6 @@ body {
 }
 
 .btn-primary, .btn-primary:hover, .btn-primary:active, .btn-primary:visited {
-    background-color: #6d7fcc !important;
 }
 .axis path,
 .axes line {
@@ -31,9 +30,13 @@ body {
     display: none;
 }
 path {
-    stroke: steelblue;
-    stroke-width: 2;
+    stroke: #000;
+    stroke-width: 0.5px;
     fill: none;
+}
+
+#menu-toggle {
+    background-color: #4e73df;
 }
 
 .container-fluid .flex-container{
